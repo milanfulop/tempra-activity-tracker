@@ -31,5 +31,9 @@
     "ts-node": "^10.9.2",
     "tsx": "^4.21.0",
     "typescript": "^5.9.3"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.99.1",
+    "jose": "^6.2.1"
   }
 }
