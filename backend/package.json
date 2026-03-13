@@ -2,21 +2,13 @@
   "name": "activity-tracker",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "main": "server.ts",
   "scripts": {
-    "dev": "tsx src/server.ts"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/milanfulop/activity-tracker.git"
+    "dev": "nodemon src/server.ts --ignore indexes"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "type": "module",
-  "bugs": {
-    "url": "https://github.com/milanfulop/activity-tracker/issues"
-  },
   "homepage": "https://github.com/milanfulop/activity-tracker#readme",
   "devDependencies": {
     "@types/express": "^5.0.6",
