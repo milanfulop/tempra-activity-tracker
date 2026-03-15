@@ -107,7 +107,7 @@
     "skipLibCheck": true                                 /* Skip type checking all .d.ts files. */
   },
   "ts-node": {
-    "files": true  // 👈 forces ts-node to include all files, including .d.ts
+    "files": true
   },
-  "include": ["src/**/*", "src/types/**/*"] // 👈 add this
+  "include": ["src/**/*", "src/types/**/*", "getUserToken.ts"]
 }

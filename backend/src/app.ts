@@ -1,10 +1,10 @@
 import express from 'express';
-import router from './routes/entries';
+import entryRouter from './routes/entries';
 
 const app = express();
 
 app.use(express.json());
 
-router.use('/entry', router);
+app.use('/entry', entryRouter);
 
 export default app;
