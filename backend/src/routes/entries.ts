@@ -1,15 +1,11 @@
 import express from 'express';
 import { authMiddleware } from '../middleware/auth';
 import { getEntries, createEntry, updateEntry, deleteEntry } from '../services/entries';
-import { requireUser } from '../utils/requireUser';
 
 const router = express.Router();
 
 router.get('/', authMiddleware, async (req, res) => {
-  const userId = requireUser(req, res);
-  if (!userId)  { 
-      return;
-  }
+  const userId = req.user!.id
 
   try {
     const entries = await getEntries(userId);
@@ -20,16 +16,14 @@ router.get('/', authMiddleware, async (req, res) => {
 });
 
 router.post('/', authMiddleware, async (req, res) => {
-  const userId = requireUser(req, res);
-  if (!userId)  { 
-      return;
-  }
+  const userId = req.user!.id
 
   try {
     const entries = await createEntry(userId);
-    res.json(entries);
+    // upload logic here
+    // res.json(entries);
   } catch (err) {
-    res.status(500).json({ error: 'Failed to fetch entries' });
+    res.status(500).json({ error: 'Failed to upload entries' });
   }
 });
 
