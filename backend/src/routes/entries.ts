@@ -1,6 +1,6 @@
 import express from 'express';
 import { authMiddleware } from '../middleware/auth';
-import { getEntries, createEntry, updateEntry, deleteEntry } from '../services/entries';
+import { getEntries, createEntry, deleteEntry } from '../services/entries';
 
 const router = express.Router();
 

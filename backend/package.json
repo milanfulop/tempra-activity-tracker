@@ -4,7 +4,8 @@
   "description": "",
   "main": "server.ts",
   "scripts": {
-    "dev": "nodemon src/server.ts --ignore indexes"
+    "dev": "nodemon src/server.ts --ignore indexes",
+    "test": "vitest"
   },
   "keywords": [],
   "author": "",
@@ -23,7 +24,8 @@
     "prettier": "^3.8.1",
     "ts-node": "^10.9.2",
     "tsx": "^4.21.0",
-    "typescript": "^5.9.3"
+    "typescript": "^5.9.3",
+    "vitest": "^4.1.0"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.99.1",
