@@ -8,6 +8,11 @@ router.get('/', authMiddleware, async (req, res) => {
   const userId = req.user!.id
   const { date } = req.query;
 
+  if(date == null) {
+    res.status(400).json({error: 'Date is required'});
+    return;
+  }
+
   try {
     const entries = await getEntries(userId, date as string);
     res.json(entries);
