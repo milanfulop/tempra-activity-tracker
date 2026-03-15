@@ -6,9 +6,10 @@ const router = express.Router();
 
 router.get('/', authMiddleware, async (req, res) => {
   const userId = req.user!.id
+  const { date } = req.query;
 
   try {
-    const entries = await getEntries(userId);
+    const entries = await getEntries(userId, date as string);
     res.json(entries);
   } catch (err) {
     res.status(500).json({ error: 'Failed to fetch entries' });
@@ -16,14 +17,18 @@ router.get('/', authMiddleware, async (req, res) => {
 });
 
 router.post('/', authMiddleware, async (req, res) => {
-  const userId = req.user!.id
+  const userId = req.user!.id;
+  const { start_time, end_time, category } = req.body;
+
+  if (!start_time || !end_time || !category) {
+    return res.status(400).json({ error: 'start_time, end_time, and category are required' });
+  }
 
   try {
-    const entries = await createEntry(userId);
-    // upload logic here
-    // res.json(entries);
+    const entry = await createEntry(userId, start_time, end_time, category);
+    res.json(entry);
   } catch (err) {
-    res.status(500).json({ error: 'Failed to upload entries' });
+    res.status(500).json({ error: 'Failed to create entry' });
   }
 });
 
