@@ -16,7 +16,9 @@ BQ_DATASET = "raw"
 BQ_CREDENTIALS_JSON = os.environ["BQ_CREDENTIALS_JSON"]
 
 yesterday = (date.today() - timedelta(days=1)).isoformat()
+today = date.today().isoformat()
 upload_all_users = "--upload-all-users" in sys.argv
+upload_all_categories = "--upload-all-categories" in sys.argv
 
 # --- Supabase ---
 supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
@@ -25,7 +27,7 @@ entries = (
     supabase.table("entry")
     .select("id, created_at, category, start_time, end_time, user_id")
     .gte("created_at", f"{yesterday}T00:00:00+00:00")
-    .lt("created_at", f"{date.today().isoformat()}T00:00:00+00:00")
+    .lt("created_at", f"{today}T00:00:00+00:00")
     .execute()
     .data
 )
@@ -38,12 +40,25 @@ else:
         supabase.table("user")
         .select("id, created_at, name")
         .gte("created_at", f"{yesterday}T00:00:00+00:00")
-        .lt("created_at", f"{date.today().isoformat()}T00:00:00+00:00")
+        .lt("created_at", f"{today}T00:00:00+00:00")
         .execute()
         .data
     )
 
-print(f"Fetched {len(entries)} entries and {len(users)} users for {yesterday}")
+if upload_all_categories:
+    categories = supabase.table("category").select("id, user_id, name, color, created_at").execute().data
+    print(f"Fetched all {len(categories)} categories")
+else:
+    categories = (
+        supabase.table("category")
+        .select("id, user_id, name, color, created_at")
+        .gte("created_at", f"{yesterday}T00:00:00+00:00")
+        .lt("created_at", f"{today}T00:00:00+00:00")
+        .execute()
+        .data
+    )
+
+print(f"Fetched {len(entries)} entries, {len(users)} users, {len(categories)} categories for {yesterday}")
 
 # --- BigQuery ---
 credentials_info = json.loads(BQ_CREDENTIALS_JSON)
@@ -65,6 +80,14 @@ users_schema = [
     bigquery.SchemaField("name", "STRING"),
 ]
 
+categories_schema = [
+    bigquery.SchemaField("id", "STRING"),
+    bigquery.SchemaField("user_id", "STRING"),
+    bigquery.SchemaField("name", "STRING"),
+    bigquery.SchemaField("color", "STRING"),
+    bigquery.SchemaField("created_at", "DATE"),
+]
+
 def normalize_dates(rows, date_fields):
     for row in rows:
         for field in date_fields:
@@ -74,13 +97,13 @@ def normalize_dates(rows, date_fields):
 
 entries = normalize_dates(entries, ["created_at"])
 users = normalize_dates(users, ["created_at"])
+categories = normalize_dates(categories, ["created_at"])
 
-def upsert_users(rows, schema, full_replace=False):
+def upsert_simple(table_id, rows, schema, full_replace=False):
     if not rows:
-        print("No new users to upload, skipping")
+        print(f"No rows to upload for {table_id}, skipping")
         return
 
-    table_id = f"{BQ_PROJECT}.{BQ_DATASET}.users"
     job_config = bigquery.LoadJobConfig(
         write_disposition=bigquery.WriteDisposition.WRITE_TRUNCATE if full_replace else bigquery.WriteDisposition.WRITE_APPEND,
         schema=schema,
@@ -88,7 +111,7 @@ def upsert_users(rows, schema, full_replace=False):
 
     job = bq.load_table_from_json(rows, table_id, job_config=job_config)
     job.result()
-    print(f"{'Replaced all' if full_replace else 'Uploaded'} {len(rows)} users to {table_id}")
+    print(f"{'Replaced all' if full_replace else 'Uploaded'} {len(rows)} rows to {table_id}")
 
 def upsert_partition(table_id, rows, schema):
     if not rows:
@@ -110,4 +133,5 @@ def upsert_partition(table_id, rows, schema):
     print(f"Uploaded {len(rows)} rows to {partition_decorator}")
 
 upsert_partition(f"{BQ_PROJECT}.{BQ_DATASET}.entries", entries, entries_schema)
-upsert_users(users, users_schema, full_replace=upload_all_users)
+upsert_simple(f"{BQ_PROJECT}.{BQ_DATASET}.users", users, users_schema, full_replace=upload_all_users)
+upsert_simple(f"{BQ_PROJECT}.{BQ_DATASET}.categories", categories, categories_schema, full_replace=upload_all_categories)

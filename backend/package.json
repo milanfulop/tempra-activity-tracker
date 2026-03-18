@@ -5,6 +5,7 @@
   "main": "server.ts",
   "scripts": {
     "dev": "nodemon src/server.ts --ignore indexes",
+    "token": "ts-node getUserToken.ts",
     "test": "vitest"
   },
   "keywords": [],

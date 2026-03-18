@@ -1,6 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
 import { Pool } from 'pg';
-import dotenv from 'dotenv';
+import * as dotenv from 'dotenv';
 dotenv.config();
 
 if(!process.env.PORT) 
