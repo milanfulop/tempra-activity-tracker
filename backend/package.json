@@ -4,7 +4,7 @@
   "description": "",
   "main": "server.ts",
   "scripts": {
-    "dev": "nodemon src/server.ts --ignore indexes",
+    "dev": "tsx watch src/server.ts",
     "token": "ts-node getUserToken.ts",
     "test": "vitest"
   },
@@ -29,7 +29,10 @@
     "vitest": "^4.1.0"
   },
   "dependencies": {
+    "@google-cloud/bigquery": "^6.2.1",
     "@supabase/supabase-js": "^2.99.1",
+    "gaxios": "^5.1.3",
+    "google-auth-library": "^7.14.1",
     "jose": "^6.2.1",
     "pg": "^8.20.0"
   }

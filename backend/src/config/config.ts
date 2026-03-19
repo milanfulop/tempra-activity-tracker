@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
 import { Pool } from 'pg';
+import { BigQuery } from '@google-cloud/bigquery';
 import * as dotenv from 'dotenv';
 dotenv.config();
 
@@ -14,6 +15,11 @@ export const supabase = createClient(
 
 export const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
+});
+
+export const bq = new BigQuery({
+  projectId: 'activity-tracker-statistics',
+  credentials: JSON.parse(process.env.BQ_CREDENTIALS_JSON!),
 });
 
 export default {

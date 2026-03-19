@@ -1,13 +1,13 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { getCategories, createCategory, updateCategory, deleteCategory } from '../services/categories'
+import { getCategories, createCategory, updateCategory, deleteCategory } from '../../services/categories'
 
-vi.mock('../config/config', () => ({
+vi.mock('../../config/config', () => ({
   pool: {
     query: vi.fn(),
   },
 }))
 
-import { pool } from '../config/config'
+import { pool } from '../../config/config'
 
 const userId = 'user-123'
 const categoryId = 'cat-456'
