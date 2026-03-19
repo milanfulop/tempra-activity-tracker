@@ -1,12 +1,22 @@
 import os
 import sys
 import json
+import logging
 from datetime import date, timedelta
 from supabase import create_client
 from google.cloud import bigquery
 from google.oauth2 import service_account
 from dotenv import load_dotenv
+from tenacity import retry, stop_after_attempt, wait_exponential
+
 load_dotenv()
+
+# --- Logging ---
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s [%(levelname)s] %(message)s"
+)
+log = logging.getLogger(__name__)
 
 # --- Config ---
 SUPABASE_URL = os.environ["SUPABASE_URL"]
@@ -15,8 +25,8 @@ BQ_PROJECT = "activity-tracker-statistics"
 BQ_DATASET = "raw"
 BQ_CREDENTIALS_JSON = os.environ["BQ_CREDENTIALS_JSON"]
 
-yesterday = (date.today() - timedelta(days=1)).isoformat()
-today = (date.today() + timedelta(days=0)).isoformat()
+yesterday = (date.today() - timedelta(days=0)).isoformat()
+today = (date.today() + timedelta(days=1)).isoformat()
 upload_all_users = "--upload-all-users" in sys.argv
 upload_all_categories = "--upload-all-categories" in sys.argv
 
@@ -34,7 +44,7 @@ entries = (
 
 if upload_all_users:
     users = supabase.table("user").select("id, created_at, name").execute().data
-    print(f"Fetched all {len(users)} users")
+    log.info(f"Fetched all {len(users)} users")
 else:
     users = (
         supabase.table("user")
@@ -47,7 +57,7 @@ else:
 
 if upload_all_categories:
     categories = supabase.table("category").select("id, user_id, name, color, is_productive, is_sleep, created_at").execute().data
-    print(f"Fetched all {len(categories)} categories")
+    log.info(f"Fetched all {len(categories)} categories")
 else:
     categories = (
         supabase.table("category")
@@ -58,7 +68,7 @@ else:
         .data
     )
 
-print(f"Fetched {len(entries)} entries, {len(users)} users, {len(categories)} categories for {yesterday}")
+log.info(f"Fetched {len(entries)} entries, {len(users)} users, {len(categories)} categories for {yesterday}")
 
 # --- BigQuery ---
 credentials_info = json.loads(BQ_CREDENTIALS_JSON)
@@ -101,9 +111,10 @@ entries = normalize_dates(entries, ["created_at"])
 users = normalize_dates(users, ["created_at"])
 categories = normalize_dates(categories, ["created_at"])
 
+@retry(stop=stop_after_attempt(3), wait=wait_exponential(multiplier=1, min=2, max=10))
 def upsert_simple(table_id, rows, schema, full_replace=False):
     if not rows:
-        print(f"No rows to upload for {table_id}, skipping")
+        log.info(f"No rows to upload for {table_id}, skipping")
         return
 
     job_config = bigquery.LoadJobConfig(
@@ -113,11 +124,12 @@ def upsert_simple(table_id, rows, schema, full_replace=False):
 
     job = bq.load_table_from_json(rows, table_id, job_config=job_config)
     job.result()
-    print(f"{'Replaced all' if full_replace else 'Uploaded'} {len(rows)} rows to {table_id}")
+    log.info(f"{'Replaced all' if full_replace else 'Uploaded'} {len(rows)} rows to {table_id}")
 
+@retry(stop=stop_after_attempt(3), wait=wait_exponential(multiplier=1, min=2, max=10))
 def upsert_partition(table_id, rows, schema):
     if not rows:
-        print(f"No rows to upload for {table_id}, skipping")
+        log.info(f"No rows to upload for {table_id}, skipping")
         return
 
     partition_decorator = f"{table_id}${yesterday.replace('-', '')}"
@@ -132,7 +144,7 @@ def upsert_partition(table_id, rows, schema):
 
     job = bq.load_table_from_json(rows, partition_decorator, job_config=job_config)
     job.result()
-    print(f"Uploaded {len(rows)} rows to {partition_decorator}")
+    log.info(f"Uploaded {len(rows)} rows to {partition_decorator}")
 
 upsert_partition(f"{BQ_PROJECT}.{BQ_DATASET}.entries", entries, entries_schema)
 upsert_simple(f"{BQ_PROJECT}.{BQ_DATASET}.users", users, users_schema, full_replace=upload_all_users)
