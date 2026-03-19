@@ -14,7 +14,7 @@ async function createEntry(
   userId: User['id'],
   start_time: Entry['start_time'],
   end_time: Entry['end_time'],
-  category: Entry['category']
+  category: Entry['category_id']
 ): Promise<Entry> {
   const client = await pool.connect();
   try {

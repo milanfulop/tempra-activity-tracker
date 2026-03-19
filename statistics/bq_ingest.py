@@ -25,7 +25,7 @@ supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
 
 entries = (
     supabase.table("entry")
-    .select("id, created_at, category, start_time, end_time, user_id")
+    .select("id, created_at, category_id, start_time, end_time, user_id")
     .gte("created_at", f"{yesterday}T00:00:00+00:00")
     .lt("created_at", f"{today}T00:00:00+00:00")
     .execute()
@@ -68,7 +68,7 @@ bq = bigquery.Client(project=BQ_PROJECT, credentials=credentials)
 entries_schema = [
     bigquery.SchemaField("id", "STRING"),
     bigquery.SchemaField("created_at", "DATE"),
-    bigquery.SchemaField("category", "STRING"),
+    bigquery.SchemaField("category_id", "STRING"),
     bigquery.SchemaField("start_time", "STRING"),
     bigquery.SchemaField("end_time", "STRING"),
     bigquery.SchemaField("user_id", "STRING"),
