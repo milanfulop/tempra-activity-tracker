@@ -4,7 +4,7 @@
   "description": "",
   "main": "server.ts",
   "scripts": {
-    "dev": "tsx watch src/server.ts",
+    "dev": "nodemon src/server.ts",
     "token": "ts-node getUserToken.ts",
     "test": "vitest"
   },

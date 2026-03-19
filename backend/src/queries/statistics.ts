@@ -1,7 +1,7 @@
 export const longestSingleSession = (userId: string, date: string) => `
   SELECT
     user_id,
-    category,
+    category_id,
     start_time,
     end_time,
     duration_minutes
