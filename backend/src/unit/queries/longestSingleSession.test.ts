@@ -7,9 +7,13 @@ vi.mock('../../config/config', () => ({
   },
 }))
 
-vi.mock('../../queries/statistics', () => ({
-  longestSingleSession: vi.fn((userId, date) => `SELECT longest FROM entries WHERE user_id = '${userId}' AND date = '${date}'`),
-}))
+vi.mock('../../queries/statistics', async (importOriginal) => {
+  const actual = await importOriginal() as Record<string, unknown>
+  return {
+    ...actual,
+    longestSingleSession: vi.fn((userId, date) => `SELECT longest FROM entries WHERE user_id = '${userId}' AND date = '${date}'`),
+  }
+})
 
 import { bq } from '../../config/config'
 

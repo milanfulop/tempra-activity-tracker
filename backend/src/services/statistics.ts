@@ -1,8 +1,9 @@
 import { bq } from '../config/config';
-import { longestSingleSession } from '../queries/statistics';
+import { longestSingleSession, trackedTimePercent } from '../queries/statistics';
 
 const statQueries: Record<string, (userId: string, date: string) => string> = {
   longest_session: longestSingleSession,
+  tracked_time_percentage: trackedTimePercent
   // add more as implemented
 };
 
