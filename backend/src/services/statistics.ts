@@ -13,17 +13,14 @@ const statQueries: Record<string, StatQuery> = {
 };
 
 export async function getStats(userId: string, date: string, stats: string[]) {
-  const result: Record<string, any> = {};
+  const entries = await Promise.all(
+    stats.map(async (stat) => {
+      const statQuery = statQueries[stat];
+      if (!statQuery) return [stat, { error: 'Unknown stat' }];
+      const [rows] = await bq.query(statQuery.query(userId, date));
+      return [stat, statQuery.multiple ? rows : (rows[0] ?? null)];
+    })
+  );
 
-  for (const stat of stats) {
-    const statQuery = statQueries[stat];
-    if (!statQuery) {
-      result[stat] = { error: 'Unknown stat' };
-      continue;
-    }
-    const [rows] = await bq.query(statQuery.query(userId, date));
-    result[stat] = statQuery.multiple ? rows : (rows[0] ?? null);
-  }
-
-  return result;
+  return Object.fromEntries(entries);
 }
