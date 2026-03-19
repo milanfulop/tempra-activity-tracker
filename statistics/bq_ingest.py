@@ -46,12 +46,12 @@ else:
     )
 
 if upload_all_categories:
-    categories = supabase.table("category").select("id, user_id, name, color, created_at").execute().data
+    categories = supabase.table("category").select("id, user_id, name, color, is_productive, is_sleep, created_at").execute().data
     print(f"Fetched all {len(categories)} categories")
 else:
     categories = (
         supabase.table("category")
-        .select("id, user_id, name, color, created_at")
+        .select("id, user_id, name, color, is_productive, is_sleep, created_at")
         .gte("created_at", f"{yesterday}T00:00:00+00:00")
         .lt("created_at", f"{today}T00:00:00+00:00")
         .execute()
@@ -85,6 +85,8 @@ categories_schema = [
     bigquery.SchemaField("user_id", "STRING"),
     bigquery.SchemaField("name", "STRING"),
     bigquery.SchemaField("color", "STRING"),
+    bigquery.SchemaField("is_productive", "BOOL"),
+    bigquery.SchemaField("is_sleep", "BOOL"),
     bigquery.SchemaField("created_at", "DATE"),
 ]
 
