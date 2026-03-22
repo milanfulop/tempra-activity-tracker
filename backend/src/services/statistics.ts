@@ -1,5 +1,5 @@
 import { bq } from '../config/config';
-import { longestSingleSession, trackedTimePercent, timeDistribution } from '../queries/statistics';
+import { dailySummary, timeDistribution } from '../queries/statistics';
 
 type StatQuery = {
   query: (userId: string, date: string) => string;
@@ -7,8 +7,7 @@ type StatQuery = {
 };
 
 const statQueries: Record<string, StatQuery> = {
-  longest_session: { query: longestSingleSession },
-  tracked_time_percentage: { query: trackedTimePercent },
+  daily_summary: { query: dailySummary },
   time_distribution: { query: timeDistribution, multiple: true },
 };
 
