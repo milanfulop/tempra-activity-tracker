@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
-import 'features/home/presentation/screen/home.dart';
-import 'features/statistics/presentation/screen/statistics.dart';
+import 'features/home/presentation/screens/home.dart';
+import 'features/statistics/presentation/screens/statistics.dart';
 void main() {
   runApp(const MyApp());
 }
