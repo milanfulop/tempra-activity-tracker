@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../utils/time_slot_provider.dart';
 import '../widgets/time_slot_cell.dart';
-// import '../widgets/activity_bottom_sheet.dart';
 
 class TimeGrid extends StatefulWidget {
   final ScrollController scrollController;
@@ -22,35 +21,11 @@ class _TimeGridState extends State<TimeGrid> {
   static const double _aspectRatio = 1.4;
   static const double _widthFactor = 0.65;
 
-  void _openBottomSheet() {
-    /*final provider = context.read<TimeSlotProvider>();
-    if (provider.selectedIndices.isEmpty) return;
-
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (_) => ChangeNotifierProvider.value(
-        value: provider,
-        child: const ActivityBottomSheet(),
-      ),
-    ).then((_) {
-      // clear selection if user dismisses without saving
-      if (provider.selectedIndices.isNotEmpty) {
-        provider.clearSelection();
-      }
-    });*/
-  }
-
   int _getIndexFromOffset(Offset localPosition) {
-    // localPosition is already in the grid's coordinate space (Listener child).
-    final adjustedY = localPosition.dy;
     final col = (localPosition.dx / (_cellWidth + _spacing))
         .floor()
         .clamp(0, _crossAxisCount - 1);
-    final row = (adjustedY / (_cellHeight + _spacing)).floor();
+    final row = (localPosition.dy / (_cellHeight + _spacing)).floor();
     final provider = context.read<TimeSlotProvider>();
     return (row * _crossAxisCount + col).clamp(0, provider.slots.length - 1);
   }
@@ -85,7 +60,6 @@ class _TimeGridState extends State<TimeGrid> {
         _cellWidth =
             (gridWidth - _spacing * (_crossAxisCount - 1)) / _crossAxisCount;
         _cellHeight = _cellWidth / _aspectRatio;
-
         return Center(
           child: FractionallySizedBox(
             widthFactor: _widthFactor,
@@ -103,11 +77,10 @@ class _TimeGridState extends State<TimeGrid> {
               },
               onPointerUp: (_) {
                 provider.onDragEnd();
-                _openBottomSheet();
               },
               child: GridView.builder(
                 shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(), 
+                physics: const NeverScrollableScrollPhysics(),
                 gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                   crossAxisCount: _crossAxisCount,
                   childAspectRatio: _aspectRatio,
