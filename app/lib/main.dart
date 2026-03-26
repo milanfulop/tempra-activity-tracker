@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 import 'features/home/presentation/screens/home.dart';
+import 'features/category_editor/presentation/category_editor.dart';
 import 'features/statistics/presentation/screens/statistics.dart';
 
 Future<void> main() async {
@@ -18,6 +19,10 @@ final _router = GoRouter(
     GoRoute(
       path: '/home',
       builder: (context, state) => const HomePage(),
+    ),
+    GoRoute(
+      path: '/category-editor',
+      builder: (context, state) => const CategoryEditorPage(),
     ),
     GoRoute(
       path: '/statistics',

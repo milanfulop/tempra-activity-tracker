@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import '../../utils/category_utils.dart';
 import '../../../../shared/models/category.dart';
 
@@ -102,9 +103,39 @@ class _CategorySelectorState extends State<CategorySelector> {
 
                       return ListView.separated(
                         scrollDirection: Axis.horizontal,
-                        itemCount: categories.length,
+                        itemCount: categories.length + 1, // extra "more" button
                         separatorBuilder: (_, __) => const SizedBox(width: 8),
                         itemBuilder: (context, index) {
+                          if (index == categories.length) {
+                            return GestureDetector(
+                              onTap: () => context.go('/category-editor'),
+                              child: AnimatedContainer(
+                                duration: const Duration(milliseconds: 180),
+                                curve: Curves.easeOut,
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 14,
+                                  vertical: 6,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: Colors.grey[900], // Dark grey background
+                                  borderRadius: BorderRadius.circular(24),
+                                  border: Border.all(
+                                    color: Colors.black.withOpacity(0.8), // Black border
+                                    width: 1.2,
+                                  ),
+                                ),
+                                child: Text(
+                                  'more',
+                                  style: const TextStyle(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w600,
+                                    color: Colors.white, // White text
+                                  ),
+                                ),
+                              ),
+                            );
+                          }
+
                           final cat = categories[index];
                           final isSelected = _selectedId == cat.id;
 
