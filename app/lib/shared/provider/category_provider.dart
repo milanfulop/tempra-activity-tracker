@@ -18,7 +18,6 @@ class CategoryProvider extends ChangeNotifier {
     _isLoading = true;
     _error = null;
     notifyListeners();
-
     try {
       _categories = await fetchCategories();
     } catch (e) {
@@ -29,23 +28,24 @@ class CategoryProvider extends ChangeNotifier {
     }
   }
 
-  // ── Create ───────────────────────────────────────────────────────────────
+  // ── Create — awaits API, throws on failure, list unchanged if error ───────
 
-  void add(Category category) {
-    createCategory(
+  Future<void> add(Category category) async {
+    await createCategory(
       id: category.id,
       name: category.name,
       color: category.color,
       isProductive: category.isProductive,
     );
+    // Only reached if the above didn't throw (i.e. server returned 2xx)
     _categories = [..._categories, category];
     notifyListeners();
   }
 
   // ── Update ───────────────────────────────────────────────────────────────
 
-  void update(Category updated) {
-    editCategory(
+  Future<void> update(Category updated) async {
+    await editCategory(
       id: updated.id,
       name: updated.name,
       color: updated.color,
@@ -60,8 +60,8 @@ class CategoryProvider extends ChangeNotifier {
 
   // ── Delete ───────────────────────────────────────────────────────────────
 
-  void delete(String categoryId) {
-    deleteCategory(categoryId);
+  Future<void> delete(String categoryId) async {
+    await deleteCategory(categoryId);
     _categories = _categories.where((c) => c.id != categoryId).toList();
     notifyListeners();
   }

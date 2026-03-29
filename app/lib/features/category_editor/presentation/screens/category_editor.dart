@@ -16,13 +16,22 @@ class _CategoryEditorPageState extends State<CategoryEditorPage> {
   @override
   void initState() {
     super.initState();
-    // Fetch if not already loaded (e.g. deep-linked directly to this page)
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final provider = context.read<CategoryProvider>();
       if (provider.categories.isEmpty && !provider.isLoading) {
         provider.fetch();
       }
     });
+  }
+
+  void _showError(String message) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: Theme.of(context).colorScheme.error,
+      ),
+    );
   }
 
   // ── Create ───────────────────────────────────────────────────────────────
@@ -34,31 +43,44 @@ class _CategoryEditorPageState extends State<CategoryEditorPage> {
       builder: (_) => const CategoryEditorPanel(),
     );
 
-    if (result != null && mounted) {
-      context.read<CategoryProvider>().add(Category(
+    if (result == null || !mounted) return;
+
+    try {
+      await context.read<CategoryProvider>().add(Category(
             id: result['id'] as String,
             name: result['name'] as String,
             color: result['color'] as Color,
             isProductive: result['isProductive'] as bool? ?? false,
           ));
+    } catch (e) {
+      _showError('Failed to create category: $e');
     }
   }
 
   // ── Edit ─────────────────────────────────────────────────────────────────
 
-  void _onCategoryEdited(String categoryId, Map<String, dynamic> result) {
-    context.read<CategoryProvider>().update(Category(
-          id: categoryId,
-          name: result['name'] as String,
-          color: result['color'] as Color,
-          isProductive: result['isProductive'] as bool? ?? false,
-        ));
+  Future<void> _onCategoryEdited(
+      String categoryId, Map<String, dynamic> result) async {
+    try {
+      await context.read<CategoryProvider>().update(Category(
+            id: categoryId,
+            name: result['name'] as String,
+            color: result['color'] as Color,
+            isProductive: result['isProductive'] as bool? ?? false,
+          ));
+    } catch (e) {
+      _showError('Failed to update category: $e');
+    }
   }
 
   // ── Delete ───────────────────────────────────────────────────────────────
 
-  void _onCategoryDeleted(String categoryId) {
-    context.read<CategoryProvider>().delete(categoryId);
+  Future<void> _onCategoryDeleted(String categoryId) async {
+    try {
+      await context.read<CategoryProvider>().delete(categoryId);
+    } catch (e) {
+      _showError('Failed to delete category: $e');
+    }
   }
 
   // ── Build ─────────────────────────────────────────────────────────────────
@@ -66,9 +88,7 @@ class _CategoryEditorPageState extends State<CategoryEditorPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Category editor'),
-      ),
+      appBar: AppBar(title: const Text('Category editor')),
       body: Consumer<CategoryProvider>(
         builder: (context, provider, _) {
           if (provider.isLoading) {
