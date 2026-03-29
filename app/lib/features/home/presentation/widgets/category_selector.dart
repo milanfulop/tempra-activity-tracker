@@ -113,7 +113,7 @@ class _CategorySelectorState extends State<CategorySelector> {
                         itemBuilder: (context, index) {
                           if (index == categories.length) {
                             return GestureDetector(
-                              onTap: () => context.go('/category-editor'),
+                              onTap: () => context.push('/category-editor'),
                               child: AnimatedContainer(
                                 duration: const Duration(milliseconds: 180),
                                 curve: Curves.easeOut,

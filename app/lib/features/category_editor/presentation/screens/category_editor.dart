@@ -88,7 +88,13 @@ class _CategoryEditorPageState extends State<CategoryEditorPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Category editor')),
+      appBar: AppBar(
+        title: const Text('Category editor'),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
+      ),
       body: Consumer<CategoryProvider>(
         builder: (context, provider, _) {
           if (provider.isLoading) {
