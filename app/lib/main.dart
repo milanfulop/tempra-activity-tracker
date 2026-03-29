@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
-
+import 'package:provider/provider.dart';
 import 'features/home/presentation/screens/home.dart';
-import 'features/category_editor/presentation/category_editor.dart';
+import 'features/category_editor/presentation/screens/category_editor.dart';
+import 'shared/provider/category_provider.dart';
 import 'features/statistics/presentation/screens/statistics.dart';
 
 Future<void> main() async {
@@ -13,6 +14,7 @@ Future<void> main() async {
 }
 
 // ─── Router ───────────────────────────────────────────────────────────────────
+
 final _router = GoRouter(
   initialLocation: '/home',
   routes: [
@@ -32,15 +34,19 @@ final _router = GoRouter(
 );
 
 // ─── App ──────────────────────────────────────────────────────────────────────
+
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp.router(
-      routerConfig: _router,
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
+    return ChangeNotifierProvider(
+      create: (_) => CategoryProvider(),
+      child: MaterialApp.router(
+        routerConfig: _router,
+        theme: ThemeData(
+          colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
+        ),
       ),
     );
   }

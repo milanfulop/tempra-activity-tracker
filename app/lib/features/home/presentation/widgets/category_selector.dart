@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import '../../utils/category_utils.dart';
+import 'package:provider/provider.dart';
+import '../../../../shared/provider/category_provider.dart';
 import '../../../../shared/models/category.dart';
 
 class CategorySelector extends StatefulWidget {
@@ -20,13 +21,18 @@ class CategorySelector extends StatefulWidget {
 }
 
 class _CategorySelectorState extends State<CategorySelector> {
-  late Future<List<Category>> _categoriesFuture;
   String? _selectedId;
 
   @override
   void initState() {
     super.initState();
-    _categoriesFuture = fetchCategories();
+    // Fetch only if the provider list is empty (avoids redundant network calls)
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final provider = context.read<CategoryProvider>();
+      if (provider.categories.isEmpty && !provider.isLoading) {
+        provider.fetch();
+      }
+    });
   }
 
   @override
@@ -74,10 +80,9 @@ class _CategorySelectorState extends State<CategorySelector> {
 
                 // ── Scrollable chip row ──────────────────────────────────
                 Expanded(
-                  child: FutureBuilder<List<Category>>(
-                    future: _categoriesFuture,
-                    builder: (context, snapshot) {
-                      if (snapshot.connectionState == ConnectionState.waiting) {
+                  child: Consumer<CategoryProvider>(
+                    builder: (context, provider, _) {
+                      if (provider.isLoading) {
                         return const Center(
                           child: SizedBox(
                             width: 20,
@@ -87,7 +92,7 @@ class _CategorySelectorState extends State<CategorySelector> {
                         );
                       }
 
-                      if (snapshot.hasError) {
+                      if (provider.error != null) {
                         return Center(
                           child: Text(
                             'Failed to load categories',
@@ -99,11 +104,11 @@ class _CategorySelectorState extends State<CategorySelector> {
                         );
                       }
 
-                      final categories = snapshot.data ?? [];
+                      final categories = provider.categories;
 
                       return ListView.separated(
                         scrollDirection: Axis.horizontal,
-                        itemCount: categories.length + 1, // extra "more" button
+                        itemCount: categories.length + 1,
                         separatorBuilder: (_, __) => const SizedBox(width: 8),
                         itemBuilder: (context, index) {
                           if (index == categories.length) {
@@ -117,19 +122,19 @@ class _CategorySelectorState extends State<CategorySelector> {
                                   vertical: 6,
                                 ),
                                 decoration: BoxDecoration(
-                                  color: Colors.grey[900], // Dark grey background
+                                  color: Colors.grey[900],
                                   borderRadius: BorderRadius.circular(24),
                                   border: Border.all(
-                                    color: Colors.black.withOpacity(0.8), // Black border
+                                    color: Colors.black.withOpacity(0.8),
                                     width: 1.2,
                                   ),
                                 ),
-                                child: Text(
+                                child: const Text(
                                   'more',
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                     fontSize: 13,
                                     fontWeight: FontWeight.w600,
-                                    color: Colors.white, // White text
+                                    color: Colors.white,
                                   ),
                                 ),
                               ),
@@ -166,9 +171,7 @@ class _CategorySelectorState extends State<CategorySelector> {
                                   fontWeight: isSelected
                                       ? FontWeight.w700
                                       : FontWeight.w500,
-                                  color: isSelected
-                                      ? Colors.white
-                                      : cat.color,
+                                  color: isSelected ? Colors.white : cat.color,
                                 ),
                               ),
                             ),
