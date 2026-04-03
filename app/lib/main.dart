@@ -10,6 +10,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import './features/auth/presentation/screens/auth.dart';
 import 'dart:async';
 import './core/config.dart';
+import './shared/main_scaffold.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -44,21 +45,30 @@ final _router = GoRouter(
     return null;
   },
   routes: [
+    ShellRoute(
+    builder: (context, state, child) => MainScaffold(child: child),
+    routes: [
+      GoRoute(
+        path: '/home',
+        builder: (context, state) => const HomePage(),
+      ),
+      GoRoute(
+        path: '/statistics',
+        builder: (context, state) => const StatisticsPage(),
+      ),
+      GoRoute(
+        path: '/profile',
+        builder: (context, state) => const SizedBox(),
+      ),
+    ],
+  ),
     GoRoute(
       path: '/auth',
       builder: (context, state) => const LoginPage(),
     ),
     GoRoute(
-      path: '/home',
-      builder: (context, state) => const HomePage(),
-    ),
-    GoRoute(
       path: '/category-editor',
       builder: (context, state) => const CategoryEditorPage(),
-    ),
-    GoRoute(
-      path: '/statistics',
-      builder: (context, state) => const StatisticsPage(),
     ),
   ],
 );
@@ -91,6 +101,11 @@ class MyApp extends StatelessWidget {
         routerConfig: _router,
         theme: ThemeData(
           colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
+          navigationBarTheme: NavigationBarThemeData(
+            iconTheme: WidgetStateProperty.all(
+              const IconThemeData(size: 32),
+            ),
+          ),
         ),
       ),
     );
