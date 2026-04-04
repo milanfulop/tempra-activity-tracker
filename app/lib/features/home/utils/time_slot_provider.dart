@@ -1,26 +1,38 @@
 import 'package:flutter/material.dart';
 import '../../../../shared/models/time_slot.dart';
 import './time_slot.dart';
+import '../../../shared/models/category.dart';
 
 class TimeSlotProvider extends ChangeNotifier {
   final TimeSlotRepository _repository = TimeSlotRepository();
 
   List<TimeSlot> slots = [];
+  Map<int, Color?> cellColorMap = {};
   Set<int> selectedIndices = {};
   bool isDragging = false;
   int? dragStartIndex;
 
-  TimeSlotProvider() {
-    loadSlots();
+  TimeSlotProvider();
+
+  // ─── Map builder ─────────────────────────────────────────────────────────
+
+  void _rebuildMap() {
+    cellColorMap = {
+      for (final slot in slots)
+        if (slot.color != null) slot.index: slot.color,
+    };
   }
 
-  // ─── Load ────────────────────────────────────────────────────────────────
-  Future<void> loadSlots() async {
-    slots = await _repository.fetchSlots(DateTime.now());
+  // ─── Load ─────────────────────────────────────────────────────────────────
+
+  Future<void> loadSlots(List<Category> categories) async {
+    slots = await _repository.fetchSlots(DateTime.now(), categories);
+    _rebuildMap();
     notifyListeners();
   }
 
-  // ─── Selection ───────────────────────────────────────────────────────────
+  // ─── Selection ────────────────────────────────────────────────────────────
+
   void onDragStart(int index) {
     isDragging = true;
     dragStartIndex = index;
@@ -30,10 +42,8 @@ class TimeSlotProvider extends ChangeNotifier {
 
   void onDragUpdate(int index) {
     if (!isDragging || dragStartIndex == null) return;
-    final start = dragStartIndex!;
-    final end = index;
-    final lo = start < end ? start : end;
-    final hi = start < end ? end : start;
+    final lo = dragStartIndex! < index ? dragStartIndex! : index;
+    final hi = dragStartIndex! < index ? index : dragStartIndex!;
     selectedIndices = Set.from(List.generate(hi - lo + 1, (i) => lo + i));
     notifyListeners();
   }
@@ -49,20 +59,29 @@ class TimeSlotProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  // ─── Edit ────────────────────────────────────────────────────────────────
-  void applyActivity({
-    required String activity,
-    required String category,
-    required Color color,
-  }) {
-    for (final i in selectedIndices) {
+  // ─── Edit ─────────────────────────────────────────────────────────────────
+
+void applyActivity({
+  required String activity,
+  required String category,
+  required Color color,
+}) {
+    final currentSelection = Set<int>.from(selectedIndices);
+    
+    for (final i in currentSelection) {
       slots[i] = slots[i].copyWith(
         activity: activity,
         category: category,
         color: color,
       );
     }
-    _repository.saveSlots(slots); // fire and forget — add error handling as needed
+
+    _rebuildMap();
+    
+    final selectedSlots = currentSelection.map((i) => slots[i]).toList()
+      ..sort((a, b) => a.index.compareTo(b.index));
+    _repository.saveSlots(selectedSlots);
+    
     clearSelection();
     notifyListeners();
   }

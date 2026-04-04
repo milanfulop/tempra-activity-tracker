@@ -12,6 +12,10 @@ class CategoryProvider extends ChangeNotifier {
   bool get isLoading => _isLoading;
   String? get error => _error;
 
+  CategoryProvider() {
+    fetch();
+  }
+
   // ── Fetch ────────────────────────────────────────────────────────────────
 
   Future<void> fetch() async {

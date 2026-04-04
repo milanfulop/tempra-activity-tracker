@@ -90,6 +90,7 @@ class _TimeGridState extends State<TimeGrid> {
                 itemCount: provider.slots.length,
                 itemBuilder: (context, index) => TimeSlotCell(
                   slot: provider.slots[index],
+                  color: provider.cellColorMap[index], // ← pass color from map
                   isSelected: provider.selectedIndices.contains(index),
                 ),
               ),

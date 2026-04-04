@@ -33,6 +33,7 @@ router.post('/', authMiddleware, async (req, res) => {
     const entry = await createEntry(userId, start_time, end_time, category);
     res.json(entry);
   } catch (err) {
+    console.error('createEntry error:', err); // ← add this
     res.status(500).json({ error: 'Failed to create entry' });
   }
 });

@@ -20,12 +20,14 @@ async function createEntry(
     try {
       await client.query('BEGIN');
 
-      const date = start_time.split('T')[0];
+      const date = new Date().toISOString().split('T')[0];
+      const startTimeOnly = start_time.split('T')[1]; // "03:30:00"   → for start_time
+      const endTimeOnly = end_time.split('T')[1];     // "03:45:00"   → for end_time
 
       // 1. Exact match → just update category
       const { rows: exactMatch } = await client.query(
         `SELECT * FROM entry WHERE user_id = $1 AND created_at = $2 AND start_time = $3 AND end_time = $4`,
-        [userId, date, start_time, end_time]
+        [userId, date, startTimeOnly, endTimeOnly]
       );
       if (exactMatch.length > 0) {
         const { rows } = await client.query(

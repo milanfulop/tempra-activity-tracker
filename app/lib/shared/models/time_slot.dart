@@ -3,11 +3,11 @@ import 'package:flutter/material.dart';
 class TimeSlot {
   final int index;
   final DateTime time;
-  String? activity;
-  String? category;
-  Color? color;
+  final String? activity;
+  final String? category;
+  final Color? color;
 
-  TimeSlot({
+  const TimeSlot({
     required this.index,
     required this.time,
     this.activity,

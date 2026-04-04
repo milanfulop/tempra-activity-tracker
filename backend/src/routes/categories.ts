@@ -6,11 +6,11 @@ const router = express.Router();
 
 router.get('/', authMiddleware, async (req, res) => {
   const userId = req.user!.id;
-
   try {
     const categories = await getCategories(userId);
     res.json(categories);
   } catch (err) {
+    console.error('getCategories error:', err);
     res.status(500).json({ error: 'Failed to fetch categories' });
   }
 });
