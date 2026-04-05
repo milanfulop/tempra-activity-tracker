@@ -6,6 +6,8 @@ import 'features/home/presentation/screens/home.dart';
 import 'features/category_editor/presentation/screens/category_editor.dart';
 import 'shared/provider/category_provider.dart';
 import 'features/statistics/presentation/screens/statistics.dart';
+import 'features/statistics/models/statistics_models.dart';
+import 'features/statistics/statistics_details/presentation/screens/statistics_details.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import './features/auth/presentation/screens/auth.dart';
 import 'dart:async';
@@ -54,7 +56,7 @@ final _router = GoRouter(
       ),
       GoRoute(
         path: '/statistics',
-        builder: (context, state) => const StatisticsPage(),
+        builder: (context, state) => const StatisticsScreen(),
       ),
       GoRoute(
         path: '/profile',
@@ -62,6 +64,12 @@ final _router = GoRouter(
       ),
     ],
   ),
+    GoRoute(
+      path: '/statistics-details',
+      builder: (context, state) => StatisticsDetailsScreen(
+        stats: state.extra as StatsResponse?,
+      ),
+    ),
     GoRoute(
       path: '/auth',
       builder: (context, state) => const LoginPage(),
