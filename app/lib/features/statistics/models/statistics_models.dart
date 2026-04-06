@@ -1,5 +1,67 @@
 import 'package:flutter/material.dart';
 
+// --- StatPeriod ---
+
+enum StatPeriod { daily, weekly, monthly }
+
+extension StatPeriodLabel on StatPeriod {
+  String get label {
+    switch (this) {
+      case StatPeriod.daily:
+        return 'Daily';
+      case StatPeriod.weekly:
+        return 'Weekly';
+      case StatPeriod.monthly:
+        return 'Monthly';
+    }
+  }
+
+  String get queryValue {
+    switch (this) {
+      case StatPeriod.daily:
+        return 'daily_summary';
+      case StatPeriod.weekly:
+        return 'weekly_summary';
+      case StatPeriod.monthly:
+        return 'monthly_summary';
+    }
+  }
+}
+
+// --- StatInsight ---
+
+class StatInsight {
+  final String prefix;
+  final String highlight;
+  final String suffix;
+
+  const StatInsight({
+    required this.prefix,
+    required this.highlight,
+    required this.suffix,
+  });
+
+  /// Builds an insight from a StatsResponse. Returns null if no summary data.
+  static StatInsight? fromResponse(StatsResponse response) {
+    final summary = response.dailySummary;
+    if (summary == null) return null;
+
+    if (summary.productivePercent > 0) {
+      return StatInsight(
+        prefix: 'You spent',
+        highlight: '${summary.productivePercent.toStringAsFixed(0)}%',
+        suffix: 'of your day productively',
+      );
+    }
+
+    return StatInsight(
+      prefix: 'You tracked',
+      highlight: '${summary.trackedPercent.toStringAsFixed(0)}%',
+      suffix: 'of your day',
+    );
+  }
+}
+
 // --- DailySummary ---
 
 class DailySummary {
@@ -104,13 +166,11 @@ class StatsResponse {
     );
   }
 
-  /// Only entries that have actual data — safe for charts and lists
   List<TimeDistribution> get validDistribution =>
       timeDistribution?.where((e) => e.hasData).toList() ?? [];
 
   bool get isEmpty => dailySummary == null && validDistribution.isEmpty;
 
-  /// Page list for the details screen — only includes sections with real data
   List<StatPage> get pages {
     final result = <StatPage>[];
     if (dailySummary != null) {
@@ -123,7 +183,7 @@ class StatsResponse {
   }
 }
 
-// --- StatPage (used by details screen) ---
+// --- StatPage ---
 
 enum StatPageType { dailySummary, timeDistribution }
 
