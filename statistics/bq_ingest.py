@@ -25,8 +25,8 @@ BQ_PROJECT = "activity-tracker-statistics"
 BQ_DATASET = "raw"
 BQ_CREDENTIALS_JSON = os.environ["BQ_CREDENTIALS_JSON"]
 
-yesterday = (date.today() - timedelta(days=0)).isoformat()
-today = (date.today() + timedelta(days=1)).isoformat()
+yesterday = (date.today() - timedelta(days=1)).isoformat()
+today = (date.today() + timedelta(days=0)).isoformat()
 upload_all_users = "--upload-all-users" in sys.argv
 upload_all_categories = "--upload-all-categories" in sys.argv
 

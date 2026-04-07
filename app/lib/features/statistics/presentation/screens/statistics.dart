@@ -17,7 +17,7 @@ class StatisticsScreen extends StatefulWidget {
 
 class _StatisticsScreenState extends State<StatisticsScreen> {
   StatPeriod _selectedPeriod = StatPeriod.daily;
-  DateTime _selectedDate = DateTime.now();
+  DateTime _selectedDate = DateTime.now().subtract(const Duration(days: 1));
   bool _isLoading = false;
   String? _error;
   StatInsight? _insight;
@@ -106,9 +106,11 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
   bool _isSameDay(DateTime a, DateTime b) =>
       a.year == b.year && a.month == b.month && a.day == b.day;
 
-  bool get _canGoForward =>
-      _selectedDate.isBefore(DateTime.now()) &&
-      !_isSameDay(_selectedDate, DateTime.now());
+  bool get _canGoForward {
+      final yesterday = DateTime.now().subtract(const Duration(days: 1));
+      return _selectedDate.isBefore(yesterday) &&
+      !_isSameDay(_selectedDate, yesterday);
+  }
 
   @override
   Widget build(BuildContext context) {
