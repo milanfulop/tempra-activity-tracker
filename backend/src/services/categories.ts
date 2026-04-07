@@ -40,15 +40,45 @@ async function updateCategory(
   return rows[0];
 }
 
+// removes userid
+// so the statistics wont return a "null" category. 
 async function deleteCategory(
   userId: User['id'],
   categoryId: Category['id']
 ): Promise<void> {
-  const { rowCount } = await pool.query(
-    'DELETE FROM category WHERE id = $1::uuid AND user_id = $2::uuid',
-    [categoryId, userId]
-  );
-  if (rowCount === 0) throw new Error('Category not found');
+  const client = await pool.connect();
+
+  try {
+    await client.query('BEGIN');
+
+    // 1. "Disown" the category
+    const { rowCount } = await client.query(
+      `UPDATE category
+       SET user_id = NULL
+       WHERE id = $1::uuid AND user_id = $2::uuid`,
+      [categoryId, userId]
+    );
+
+    if (rowCount === 0) {
+      throw new Error('Category not found or not owned by user');
+    }
+
+    // 2. Delete today's entries for that category
+    await client.query(
+      `DELETE FROM entry
+       WHERE category_id = $1::uuid
+       AND created_at >= CURRENT_DATE
+       AND created_at < CURRENT_DATE + INTERVAL '1 day'`,
+      [categoryId]
+    );
+
+    await client.query('COMMIT');
+  } catch (err) {
+    await client.query('ROLLBACK');
+    throw err;
+  } finally {
+    client.release();
+  }
 }
 
 export { getCategories, createCategory, updateCategory, deleteCategory };
