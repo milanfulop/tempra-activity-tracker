@@ -6,6 +6,7 @@ import 'features/home/presentation/screens/home.dart';
 import 'features/category_editor/presentation/screens/category_editor.dart';
 import 'shared/provider/category_provider.dart';
 import 'features/statistics/presentation/screens/statistics.dart';
+import 'features/profile/presentation/screens/profile_page.dart';
 import 'features/statistics/models/statistics_models.dart';
 import 'features/statistics/statistics_details/presentation/screens/statistics_details.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -95,7 +96,7 @@ final _router = GoRouter(
         ),
         GoRoute(
           path: '/profile',
-          builder: (context, state) => const SizedBox(),
+          builder: (context, state) => const ProfilePage(),
         ),
       ],
     ),
