@@ -14,6 +14,7 @@ import './features/auth/presentation/screens/auth.dart';
 import 'dart:async';
 import './core/config.dart';
 import './shared/main_scaffold.dart';
+import './shared/utils/notification_service.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -33,6 +34,8 @@ Future<void> main() async {
   supabase.auth.onAuthStateChange.listen((data) {
     print('AUTH STATE: ${data.event} SESSION: ${data.session}');
   });
+
+  await NotificationService.instance.init();
 
   runApp(const MyApp());
 }
