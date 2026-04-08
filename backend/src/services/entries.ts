@@ -140,7 +140,7 @@ async function deleteEntry(
   try {
     await client.query('BEGIN');
 
-    const date = start_time.split('T')[0];
+    const date = new Date().toISOString().slice(0, 10);
 
     const { rows: overlapping } = await client.query(
       `SELECT * FROM entry WHERE user_id = $1 AND created_at = $2 AND start_time < $4 AND end_time > $3`,

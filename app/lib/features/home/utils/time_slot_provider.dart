@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../../shared/models/time_slot.dart';
 import './time_slot.dart';
 import '../../../shared/models/category.dart';
+import '../utils/time_slot_utils.dart';
 
 class TimeSlotProvider extends ChangeNotifier {
   final TimeSlotRepository _repository = TimeSlotRepository();
@@ -80,9 +81,32 @@ void applyActivity({
     
     final selectedSlots = currentSelection.map((i) => slots[i]).toList()
       ..sort((a, b) => a.index.compareTo(b.index));
-    _repository.saveSlots(selectedSlots);
+    saveSlots(selectedSlots);
     
     clearSelection();
+    notifyListeners();
+  }
+  Future<void> deleteSelected() async {
+    final currentSelection = Set<int>.from(selectedIndices);
+
+    // Get slots BEFORE clearing them (needed for API)
+    final selectedSlots = currentSelection.map((i) => slots[i]).toList()
+      ..sort((a, b) => a.index.compareTo(b.index));
+
+    await deleteSlots(selectedSlots);
+
+    for (final i in currentSelection) {
+      slots[i] = slots[i].copyWith(
+        activity: null,
+        category: null,
+        color: null,
+      );
+    }
+
+    _rebuildMap();
+
+    clearSelection();
+
     notifyListeners();
   }
 }

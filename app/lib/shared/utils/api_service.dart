@@ -52,10 +52,14 @@ class ApiService {
     return _handleResponse(response);
   }
 
-  static Future<dynamic> delete(String path) async {
+  static Future<dynamic> delete(
+    String path, {
+    Map<String, dynamic>? body,
+  }) async {
     final response = await _client.delete(
       Uri.parse('$_baseUrl$path'),
       headers: _headers,
+      body: body != null ? jsonEncode(body) : null,
     );
     return _handleResponse(response);
   }

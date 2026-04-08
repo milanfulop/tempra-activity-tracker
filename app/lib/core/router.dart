@@ -15,7 +15,7 @@ final appRouter = GoRouter(
         ),
         GoRoute(
           path: '/statistics',
-          builder: (_, __) => const StatisticsPage(),
+          builder: (_, __) => const StatisticsScreen(),
         ),
       ],
     ),

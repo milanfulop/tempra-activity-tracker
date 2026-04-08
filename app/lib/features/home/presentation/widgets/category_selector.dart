@@ -3,6 +3,8 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../../../../shared/provider/category_provider.dart';
 import '../../../../shared/models/category.dart';
+import '../../utils/time_slot_provider.dart';
+import '../../utils/time_slot_utils.dart';
 
 class CategorySelector extends StatefulWidget {
   final Color selectedColor;
@@ -108,29 +110,34 @@ class _CategorySelectorState extends State<CategorySelector> {
 
                       return ListView.separated(
                         scrollDirection: Axis.horizontal,
-                        itemCount: categories.length + 1,
+                        itemCount: categories.length + 2, // +1 for "uncategorized", +1 for "more"
                         separatorBuilder: (_, __) => const SizedBox(width: 8),
                         itemBuilder: (context, index) {
-                          if (index == categories.length) {
+                          // ─── 1. UNCATEGORIZED BUTTON ─────────────────────────────
+                          if (index == 0) {
                             return GestureDetector(
-                              onTap: () => context.push('/category-editor'),
+                              onTap: () async {
+                              final provider = context.read<TimeSlotProvider>();
+
+                              if (provider.selectedIndices.isEmpty) return;
+
+                              try {
+                                await provider.deleteSelected();
+                              } catch (e) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(content: Text('Error: $e')),
+                                );
+                              }
+                            },
                               child: AnimatedContainer(
                                 duration: const Duration(milliseconds: 180),
-                                curve: Curves.easeOut,
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 14,
-                                  vertical: 6,
-                                ),
+                                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
                                 decoration: BoxDecoration(
-                                  color: Colors.grey[900],
+                                  color: Colors.grey[800],
                                   borderRadius: BorderRadius.circular(24),
-                                  border: Border.all(
-                                    color: Colors.black.withOpacity(0.8),
-                                    width: 1.2,
-                                  ),
                                 ),
                                 child: const Text(
-                                  'more',
+                                  'uncategorized',
                                   style: TextStyle(
                                     fontSize: 13,
                                     fontWeight: FontWeight.w600,
@@ -141,7 +148,30 @@ class _CategorySelectorState extends State<CategorySelector> {
                             );
                           }
 
-                          final cat = categories[index];
+                          // shift index because of "uncategorized"
+                          final adjustedIndex = index - 1;
+
+                          // ─── 2. MORE BUTTON ───────────────────────────────────────
+                          if (adjustedIndex == categories.length) {
+                            return GestureDetector(
+                              onTap: () => context.push('/category-editor'),
+                              child: AnimatedContainer(
+                                duration: const Duration(milliseconds: 180),
+                                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                                decoration: BoxDecoration(
+                                  color: Colors.grey[900],
+                                  borderRadius: BorderRadius.circular(24),
+                                ),
+                                child: const Text(
+                                  'more',
+                                  style: TextStyle(color: Colors.white),
+                                ),
+                              ),
+                            );
+                          }
+
+                          // ─── 3. NORMAL CATEGORY ───────────────────────────────────
+                          final cat = categories[adjustedIndex];
                           final isSelected = _selectedId == cat.id;
 
                           return GestureDetector(
@@ -151,9 +181,7 @@ class _CategorySelectorState extends State<CategorySelector> {
                             },
                             child: AnimatedContainer(
                               duration: const Duration(milliseconds: 180),
-                              curve: Curves.easeOut,
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 14, vertical: 6),
+                              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
                               decoration: BoxDecoration(
                                 color: isSelected
                                     ? cat.color

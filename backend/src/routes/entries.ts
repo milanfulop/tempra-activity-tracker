@@ -38,4 +38,23 @@ router.post('/', authMiddleware, async (req, res) => {
   }
 });
 
+router.delete('/', authMiddleware, async (req, res) => {
+  const userId = req.user!.id;
+  const { start_time, end_time } = req.body;
+
+  if (!start_time || !end_time) {
+    return res.status(400).json({
+      error: 'start_time and end_time are required',
+    });
+  }
+
+  try {
+    await deleteEntry(userId, start_time, end_time);
+    res.json({ success: true });
+  } catch (err) {
+    console.error('deleteEntry error:', err);
+    res.status(500).json({ error: 'Failed to delete entry' });
+  }
+});
+
 export default router;
