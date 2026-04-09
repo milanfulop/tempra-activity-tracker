@@ -59,17 +59,13 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
   }
 
   void _goToPreviousDay() {
-    setState(() {
-      _selectedDate = _selectedDate.subtract(const Duration(days: 1));
-    });
+    setState(() => _selectedDate = _selectedDate.subtract(const Duration(days: 1)));
     _fetchData();
   }
 
   void _goToNextDay() {
     if (_canGoForward) {
-      setState(() {
-        _selectedDate = _selectedDate.add(const Duration(days: 1));
-      });
+      setState(() => _selectedDate = _selectedDate.add(const Duration(days: 1)));
       _fetchData();
     }
   }
@@ -90,7 +86,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
   }
 
   void _onTap() {
-    if (_stats != null) {
+    if (_stats != null && !_stats!.isEmpty) {
       context.push('/statistics-details', extra: _stats);
     }
   }
@@ -107,29 +103,33 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
       a.year == b.year && a.month == b.month && a.day == b.day;
 
   bool get _canGoForward {
-      final yesterday = DateTime.now().subtract(const Duration(days: 1));
-      return _selectedDate.isBefore(yesterday) &&
-      !_isSameDay(_selectedDate, yesterday);
+    final yesterday = DateTime.now().subtract(const Duration(days: 1));
+    return _selectedDate.isBefore(yesterday) &&
+        !_isSameDay(_selectedDate, yesterday);
   }
+
+  bool get _hasData => _stats != null && !_stats!.isEmpty;
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF0D0A1A),
+      backgroundColor: const Color(0xFF12121A),
       body: GestureDetector(
         onHorizontalDragEnd: _onSwipe,
         onTap: _onTap,
         child: Stack(
           children: [
+            // background gradient
             Container(
               decoration: const BoxDecoration(
                 gradient: RadialGradient(
                   center: Alignment(0, -0.3),
                   radius: 1.2,
-                  colors: [Color(0xFF1E1040), Color(0xFF0D0A1A)],
+                  colors: [Color(0xFF1C1C26), Color(0xFF12121A)],
                 ),
               ),
             ),
+
             SafeArea(
               child: Column(
                 children: [
@@ -137,34 +137,48 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                     selected: _selectedPeriod,
                     onChanged: _onPeriodChanged,
                   ),
-                  const SizedBox(height: 16),
-                  AnimatedSwitcher(
-                    duration: const Duration(milliseconds: 400),
-                    child: _isLoading
-                        ? const InsightSkeleton()
-                        : _error != null
-                            ? const InsightError()
-                            : _insight != null
-                                ? InsightText(insight: _insight!)
-                                : const SizedBox.shrink(),
+                  const Spacer(),
+
+                  // insight block — bottom area above date bar
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: AnimatedSwitcher(
+                        duration: const Duration(milliseconds: 400),
+                        child: _isLoading
+                            ? const InsightSkeleton()
+                            : _error != null
+                                ? const InsightError()
+                                : _insight != null
+                                    ? InsightText(insight: _insight!)
+                                    : const SizedBox.shrink(),
+                      ),
                   ),
-                  const SizedBox(height: 24),
-                  Expanded(
-                    child: Center(
-                      child: Text(
-                        'Productivity Overview',
-                        style: TextStyle(
-                          color: Colors.white.withOpacity(0.2),
-                          fontSize: 14,
-                          letterSpacing: 1,
-                        ),
+
+                  const SizedBox(height: 64),
+
+                  // tap indicator
+                  AnimatedOpacity(
+                    duration: const Duration(milliseconds: 300),
+                    opacity: _isLoading ? 0 : 1,
+                    child: Text(
+                      _hasData
+                          ? 'Tap for details'
+                          : 'No data recorded for this day',
+                      style: TextStyle(
+                        color: Colors.white.withOpacity(0.2),
+                        fontSize: 12,
+                        letterSpacing: 0.5,
+                        fontWeight: FontWeight.w400,
                       ),
                     ),
                   ),
-                  const SizedBox(height: 80),
+
+                  const SizedBox(height: 100),
                 ],
               ),
             ),
+
+            // date bar
             Positioned(
               bottom: 24,
               left: 24,

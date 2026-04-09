@@ -46,18 +46,10 @@ class StatInsight {
     final summary = response.dailySummary;
     if (summary == null) return null;
 
-    if (summary.productivePercent > 0) {
-      return StatInsight(
-        prefix: 'You spent',
-        highlight: '${summary.productivePercent.toStringAsFixed(0)}%',
-        suffix: 'of your day productively',
-      );
-    }
-
     return StatInsight(
-      prefix: 'You tracked',
+      prefix: 'tracked',
       highlight: '${summary.trackedPercent.toStringAsFixed(0)}%',
-      suffix: 'of your day',
+      suffix: '${summary.productivePercent.toStringAsFixed(0)}%',
     );
   }
 }
