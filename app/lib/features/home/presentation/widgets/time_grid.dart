@@ -5,7 +5,6 @@ import '../widgets/time_slot_cell.dart';
 
 class TimeGrid extends StatefulWidget {
   final ScrollController scrollController;
-
   const TimeGrid({super.key, required this.scrollController});
 
   @override
@@ -17,9 +16,11 @@ class _TimeGridState extends State<TimeGrid> {
   double _cellWidth = 0;
 
   static const int _crossAxisCount = 4;
-  static const double _spacing = 4.0;
-  static const double _aspectRatio = 1.4;
-  static const double _widthFactor = 0.65;
+  static const double _spacing = 8.0;
+  static const double _aspectRatio = 1.0;
+  static const double _labelColumnWidth = 36.0;
+
+  static const _minuteLabels = [':00', ':15', ':30', ':45'];
 
   int _getIndexFromOffset(Offset localPosition) {
     final col = (localPosition.dx / (_cellWidth + _spacing))
@@ -37,7 +38,8 @@ class _TimeGridState extends State<TimeGrid> {
 
     if (globalPosition.dy < edgeThreshold) {
       widget.scrollController.animateTo(
-        (widget.scrollController.offset - scrollSpeed).clamp(0, double.infinity),
+        (widget.scrollController.offset - scrollSpeed)
+            .clamp(0, double.infinity),
         duration: const Duration(milliseconds: 16),
         curve: Curves.linear,
       );
@@ -53,49 +55,118 @@ class _TimeGridState extends State<TimeGrid> {
   @override
   Widget build(BuildContext context) {
     final provider = context.watch<TimeSlotProvider>();
+    final totalRows = (provider.slots.length / _crossAxisCount).ceil();
 
     return LayoutBuilder(
       builder: (context, constraints) {
-        final gridWidth = constraints.maxWidth * _widthFactor;
-        _cellWidth =
-            (gridWidth - _spacing * (_crossAxisCount - 1)) / _crossAxisCount;
+        _cellWidth = (constraints.maxWidth -
+                (_labelColumnWidth * 2) -
+                _spacing * (_crossAxisCount - 1)) /
+            _crossAxisCount;
         _cellHeight = _cellWidth / _aspectRatio;
-        return Center(
-          child: FractionallySizedBox(
-            widthFactor: _widthFactor,
-            child: Listener(
+
+        return Column(
+          children: [
+            // ── minute header row ────────────────────────────────────
+            Row(
+              children: [
+                SizedBox(width: _labelColumnWidth),
+                ...List.generate(
+                  _crossAxisCount,
+                  (i) => Expanded(
+                    child: Center(
+                      child: Text(
+                        _minuteLabels[i],
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: Colors.white.withOpacity(0.35),
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+                SizedBox(width: _labelColumnWidth),
+              ],
+            ),
+            const SizedBox(height: 6),
+
+            // ── grid with hour labels ────────────────────────────────
+            Listener(
               onPointerDown: (e) {
-                final index = _getIndexFromOffset(e.localPosition);
+                final localOffset = Offset(
+                    e.localPosition.dx - _labelColumnWidth,
+                    e.localPosition.dy);
+                final index = _getIndexFromOffset(localOffset);
                 provider.onDragStart(index);
               },
               onPointerMove: (e) {
                 if (provider.isDragging) {
-                  final index = _getIndexFromOffset(e.localPosition);
+                  final localOffset = Offset(
+                      e.localPosition.dx - _labelColumnWidth,
+                      e.localPosition.dy);
+                  final index = _getIndexFromOffset(localOffset);
                   provider.onDragUpdate(index);
                   _handleEdgeScroll(e.position);
                 }
               },
-              onPointerUp: (_) {
-                provider.onDragEnd();
-              },
-              child: GridView.builder(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: _crossAxisCount,
-                  childAspectRatio: _aspectRatio,
-                  crossAxisSpacing: _spacing,
-                  mainAxisSpacing: _spacing,
-                ),
-                itemCount: provider.slots.length,
-                itemBuilder: (context, index) => TimeSlotCell(
-                  slot: provider.slots[index],
-                  color: provider.cellColorMap[index], // ← pass color from map
-                  isSelected: provider.selectedIndices.contains(index),
-                ),
+              onPointerUp: (_) => provider.onDragEnd(),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // ── hour labels ────────────────────────────────────
+                  SizedBox(
+                    width: _labelColumnWidth,
+                    child: Column(
+                      children: List.generate(totalRows, (row) {
+                        final showLabel = row % 4 == 0;
+                        final isLastRow = row == totalRows - 1;
+                        return SizedBox(
+                          height: _cellHeight + (isLastRow ? 0 : _spacing),
+                          child: Align(
+                            alignment: Alignment.centerLeft,
+                            child: showLabel
+                                ? Text(
+                                    '${row}h',
+                                    style: TextStyle(
+                                      fontSize: 13,
+                                      color: Colors.white.withOpacity(0.35),
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  )
+                                : const SizedBox.shrink(),
+                          ),
+                        );
+                      }),
+                    ),
+                  ),
+
+                  // ── grid cells ─────────────────────────────────────
+                  Expanded(
+                    child: GridView.builder(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: _crossAxisCount,
+                        childAspectRatio: _aspectRatio,
+                        crossAxisSpacing: _spacing,
+                        mainAxisSpacing: _spacing,
+                      ),
+                      itemCount: provider.slots.length,
+                      itemBuilder: (context, index) => TimeSlotCell(
+                        slot: provider.slots[index],
+                        color: provider.cellColorMap[index],
+                        isSelected: provider.selectedIndices.contains(index),
+                      ),
+                    ),
+                  ),
+
+                  // ── balancing spacer ───────────────────────────────
+                  SizedBox(width: _labelColumnWidth),
+                ],
               ),
             ),
-          ),
+          ],
         );
       },
     );
