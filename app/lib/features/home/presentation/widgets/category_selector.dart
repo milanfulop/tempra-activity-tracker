@@ -4,7 +4,6 @@ import 'package:provider/provider.dart';
 import '../../../../shared/provider/category_provider.dart';
 import '../../../../shared/models/category.dart';
 import '../../utils/time_slot_provider.dart';
-import '../../utils/time_slot_utils.dart';
 
 class CategorySelector extends StatefulWidget {
   final Color selectedColor;
@@ -28,7 +27,6 @@ class _CategorySelectorState extends State<CategorySelector> {
   @override
   void initState() {
     super.initState();
-    // Fetch only if the provider list is empty (avoids redundant network calls)
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final provider = context.read<CategoryProvider>();
       if (provider.categories.isEmpty && !provider.isLoading) {
@@ -44,176 +42,183 @@ class _CategorySelectorState extends State<CategorySelector> {
     return Center(
       child: SizedBox(
         width: screenWidth * 0.90,
-        height: 100,
-        child: Material(
-          elevation: 4,
-          borderRadius: BorderRadius.circular(16),
-          color: Theme.of(context).colorScheme.surface,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // ── Header ──────────────────────────────────────────────
-                Row(
-                  children: [
-                    Container(
-                      width: 10,
-                      height: 10,
-                      decoration: BoxDecoration(
-                        color: widget.selectedColor,
-                        shape: BoxShape.circle,
-                      ),
+        height: 90,
+        child: Container(
+          decoration: BoxDecoration(
+            color: const Color(0xFF1C1C26),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(
+              color: Colors.white.withOpacity(0.12),
+              width: 1.2,
+            ),
+          ),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // ── header ──────────────────────────────────────────────
+              Row(
+                children: [
+                  Container(
+                    width: 7,
+                    height: 7,
+                    decoration: BoxDecoration(
+                      color: widget.selectedColor,
+                      shape: BoxShape.circle,
                     ),
-                    const SizedBox(width: 6),
-                    Text(
-                      widget.selectedName.isEmpty
-                          ? 'Select a category'
-                          : widget.selectedName,
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                        color: widget.selectedColor,
-                      ),
+                  ),
+                  const SizedBox(width: 6),
+                  Text(
+                    widget.selectedName.isEmpty
+                        ? 'select a category'
+                        : widget.selectedName,
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
+                      color: widget.selectedName.isEmpty
+                          ? Colors.white.withOpacity(0.3)
+                          : widget.selectedColor,
+                      letterSpacing: 0.2,
                     ),
-                  ],
-                ),
-                const SizedBox(height: 8),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
 
-                // ── Scrollable chip row ──────────────────────────────────
-                Expanded(
-                  child: Consumer<CategoryProvider>(
-                    builder: (context, provider, _) {
-                      if (provider.isLoading) {
-                        return const Center(
-                          child: SizedBox(
-                            width: 20,
-                            height: 20,
-                            child: CircularProgressIndicator(strokeWidth: 2),
+              // ── chip row ─────────────────────────────────────────────
+              Expanded(
+                child: Consumer<CategoryProvider>(
+                  builder: (context, provider, _) {
+                    if (provider.isLoading) {
+                      return Center(
+                        child: SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 1.5,
+                            color: Colors.white.withOpacity(0.3),
                           ),
-                        );
-                      }
+                        ),
+                      );
+                    }
 
-                      if (provider.error != null) {
-                        return Center(
-                          child: Text(
-                            'Failed to load categories',
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: Theme.of(context).colorScheme.error,
-                            ),
+                    if (provider.error != null) {
+                      return Center(
+                        child: Text(
+                          'failed to load',
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: Colors.red.withOpacity(0.7),
                           ),
-                        );
-                      }
+                        ),
+                      );
+                    }
 
-                      final categories = provider.categories;
+                    final categories = provider.categories;
 
-                      return ListView.separated(
-                        scrollDirection: Axis.horizontal,
-                        itemCount: categories.length + 2, // +1 for "uncategorized", +1 for "more"
-                        separatorBuilder: (_, __) => const SizedBox(width: 8),
-                        itemBuilder: (context, index) {
-                          // ─── 1. UNCATEGORIZED BUTTON ─────────────────────────────
-                          if (index == 0) {
-                            return GestureDetector(
-                              onTap: () async {
-                              final provider = context.read<TimeSlotProvider>();
-
-                              if (provider.selectedIndices.isEmpty) return;
-
+                    return ListView.separated(
+                      scrollDirection: Axis.horizontal,
+                      itemCount: categories.length + 2,
+                      separatorBuilder: (_, __) => const SizedBox(width: 6),
+                      itemBuilder: (context, index) {
+                        // ── none button ──────────────────────────────
+                        if (index == 0) {
+                          return GestureDetector(
+                            onTap: () async {
+                              final p = context.read<TimeSlotProvider>();
+                              if (p.selectedIndices.isEmpty) return;
                               try {
-                                await provider.deleteSelected();
+                                await p.deleteSelected();
                               } catch (e) {
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   SnackBar(content: Text('Error: $e')),
                                 );
                               }
                             },
-                              child: AnimatedContainer(
-                                duration: const Duration(milliseconds: 180),
-                                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-                                decoration: BoxDecoration(
-                                  color: Colors.grey[800],
-                                  borderRadius: BorderRadius.circular(24),
-                                ),
-                                child: const Text(
-                                  'uncategorized',
-                                  style: TextStyle(
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.w600,
-                                    color: Colors.white,
-                                  ),
-                                ),
-                              ),
-                            );
-                          }
-
-                          // shift index because of "uncategorized"
-                          final adjustedIndex = index - 1;
-
-                          // ─── 2. MORE BUTTON ───────────────────────────────────────
-                          if (adjustedIndex == categories.length) {
-                            return GestureDetector(
-                              onTap: () => context.push('/category-editor'),
-                              child: AnimatedContainer(
-                                duration: const Duration(milliseconds: 180),
-                                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-                                decoration: BoxDecoration(
-                                  color: Colors.grey[900],
-                                  borderRadius: BorderRadius.circular(24),
-                                ),
-                                child: const Text(
-                                  'more',
-                                  style: TextStyle(color: Colors.white),
-                                ),
-                              ),
-                            );
-                          }
-
-                          // ─── 3. NORMAL CATEGORY ───────────────────────────────────
-                          final cat = categories[adjustedIndex];
-                          final isSelected = _selectedId == cat.id;
-
-                          return GestureDetector(
-                            onTap: () {
-                              setState(() => _selectedId = cat.id);
-                              widget.onCategorySelected?.call(cat);
-                            },
-                            child: AnimatedContainer(
-                              duration: const Duration(milliseconds: 180),
-                              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-                              decoration: BoxDecoration(
-                                color: isSelected
-                                    ? cat.color
-                                    : cat.color.withOpacity(0.12),
-                                borderRadius: BorderRadius.circular(24),
-                                border: Border.all(
-                                  color: cat.color,
-                                  width: isSelected ? 0 : 1.2,
-                                ),
-                              ),
-                              child: Text(
-                                cat.name,
-                                style: TextStyle(
-                                  fontSize: 13,
-                                  fontWeight: isSelected
-                                      ? FontWeight.w700
-                                      : FontWeight.w500,
-                                  color: isSelected ? Colors.white : cat.color,
-                                ),
-                              ),
+                            child: _Chip(
+                              label: 'none',
+                              color: Colors.white,
+                              isSelected: false,
                             ),
                           );
-                        },
-                      );
-                    },
-                  ),
+                        }
+
+                        final adjustedIndex = index - 1;
+
+                        // ── more button ──────────────────────────────
+                        if (adjustedIndex == categories.length) {
+                          return GestureDetector(
+                            onTap: () => context.push('/category-editor'),
+                            child: _Chip(
+                              label: '+ more',
+                              color: Colors.white,
+                              isSelected: false,
+                            ),
+                          );
+                        }
+
+                        // ── category chip ────────────────────────────
+                        final cat = categories[adjustedIndex];
+                        final isSelected = _selectedId == cat.id;
+
+                        return GestureDetector(
+                          onTap: () {
+                            setState(() => _selectedId = cat.id);
+                            widget.onCategorySelected?.call(cat);
+                          },
+                          child: _Chip(
+                            label: cat.name,
+                            color: cat.color,
+                            isSelected: isSelected,
+                          ),
+                        );
+                      },
+                    );
+                  },
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
       ),
+    );
+  }
+}
+
+class _Chip extends StatelessWidget {
+  final String label;
+  final Color color;
+  final bool isSelected;
+
+  const _Chip({
+    required this.label,
+    required this.color,
+    required this.isSelected,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 180),
+      padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 5),
+      decoration: BoxDecoration(
+        color: isSelected ? color.withOpacity(0.2) : color.withOpacity(0.08),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: isSelected ? color : color.withOpacity(0.6),
+          width: isSelected ? 1.5 : 1.2,
+        ),
+      ),
+      child: Center(
+          child: Text(
+            label,
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+              color: color,
+            ),
+          ),
+        ),
     );
   }
 }
