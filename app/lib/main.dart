@@ -15,6 +15,7 @@ import 'dart:async';
 import './core/config.dart';
 import './shared/main_scaffold.dart';
 import './shared/utils/notification_service.dart';
+import './features/settings/presentation/screens/settings.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -116,6 +117,10 @@ final _router = GoRouter(
     GoRoute(
       path: '/category-editor',
       builder: (context, state) => const CategoryEditorPage(),
+    ),
+    GoRoute(
+      path: '/settings',
+      builder: (context, state) => const SettingsPage(),
     ),
   ],
 );

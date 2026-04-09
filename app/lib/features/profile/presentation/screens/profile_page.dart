@@ -1,26 +1,22 @@
 import 'package:flutter/material.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:go_router/go_router.dart';
 
 class ProfilePage extends StatelessWidget {
   const ProfilePage({super.key});
 
-  Future<void> _signOut(BuildContext context) async {
-    try {
-      await Supabase.instance.client.auth.signOut();
-
-      // Navigator.pushReplacementNamed(context, '/auth');
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error signing out: $e')),
-      );
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
-    return ElevatedButton(
-      onPressed: () => _signOut(context),
-      child: const Text('Sign Out'),
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Profile'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.settings),
+            onPressed: () => context.push('/settings'),
+          ),
+        ],
+      ),
+      body: const Center(child: Text('Profile')),
     );
   }
 }
