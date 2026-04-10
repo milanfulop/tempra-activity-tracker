@@ -3,22 +3,21 @@ import '../../../models/statistics_models.dart';
 
 class TimeDistributionPage extends StatelessWidget {
   final List<TimeDistribution> distribution;
-
   const TimeDistributionPage({super.key, required this.distribution});
 
   @override
   Widget build(BuildContext context) {
     return SafeArea(
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(24, 64, 24, 80),
+        padding: const EdgeInsets.fromLTRB(24, 72, 24, 80),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              'Time Distribution',
+            Text(
+              'TIME DISTRIBUTION',
               style: TextStyle(
-                color: Colors.white54,
-                fontSize: 12,
+                color: Colors.white.withOpacity(0.35),
+                fontSize: 11,
                 letterSpacing: 2,
                 fontWeight: FontWeight.w500,
               ),
@@ -29,7 +28,10 @@ class TimeDistributionPage extends StatelessWidget {
             Expanded(
               child: ListView.separated(
                 itemCount: distribution.length,
-                separatorBuilder: (_, __) => const SizedBox(height: 12),
+                separatorBuilder: (_, __) => Divider(
+                  color: Colors.white.withOpacity(0.06),
+                  height: 24,
+                ),
                 itemBuilder: (context, index) =>
                     DistributionRow(item: distribution[index]),
               ),
@@ -43,15 +45,14 @@ class TimeDistributionPage extends StatelessWidget {
 
 class DistributionBar extends StatelessWidget {
   final List<TimeDistribution> distribution;
-
   const DistributionBar({super.key, required this.distribution});
 
   @override
   Widget build(BuildContext context) {
     return ClipRRect(
-      borderRadius: BorderRadius.circular(8),
+      borderRadius: BorderRadius.circular(6),
       child: SizedBox(
-        height: 12,
+        height: 10,
         child: Row(
           children: distribution.map((item) {
             return Flexible(
@@ -67,7 +68,6 @@ class DistributionBar extends StatelessWidget {
 
 class DistributionRow extends StatelessWidget {
   final TimeDistribution item;
-
   const DistributionRow({super.key, required this.item});
 
   @override
@@ -75,8 +75,8 @@ class DistributionRow extends StatelessWidget {
     return Row(
       children: [
         Container(
-          width: 10,
-          height: 10,
+          width: 8,
+          height: 8,
           decoration: BoxDecoration(
             color: item.color,
             shape: BoxShape.circle,
@@ -86,8 +86,8 @@ class DistributionRow extends StatelessWidget {
         Expanded(
           child: Text(
             item.categoryName,
-            style: const TextStyle(
-              color: Colors.white70,
+            style: TextStyle(
+              color: Colors.white.withOpacity(0.7),
               fontSize: 14,
               fontWeight: FontWeight.w400,
             ),
@@ -102,11 +102,15 @@ class DistributionRow extends StatelessWidget {
           ),
         ),
         const SizedBox(width: 12),
-        Text(
-          '${item.minutes}m',
-          style: TextStyle(
-            color: Colors.white.withOpacity(0.35),
-            fontSize: 13,
+        SizedBox(
+          width: 40,
+          child: Text(
+            '${item.minutes}m',
+            textAlign: TextAlign.right,
+            style: TextStyle(
+              color: Colors.white.withOpacity(0.3),
+              fontSize: 13,
+            ),
           ),
         ),
       ],

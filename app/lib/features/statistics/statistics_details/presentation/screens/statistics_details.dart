@@ -7,7 +7,6 @@ import '../widgets/back_button.dart';
 
 class StatisticsDetailsScreen extends StatefulWidget {
   final StatsResponse? stats;
-
   const StatisticsDetailsScreen({super.key, this.stats});
 
   @override
@@ -24,7 +23,7 @@ class _StatisticsDetailsScreenState extends State<StatisticsDetailsScreen> {
   void initState() {
     super.initState();
     _pages = widget.stats?.pages ?? [];
-    _pageController = PageController(initialPage: 0);
+    _pageController = PageController();
   }
 
   @override
@@ -33,25 +32,46 @@ class _StatisticsDetailsScreenState extends State<StatisticsDetailsScreen> {
     super.dispose();
   }
 
+  void _goToNext() {
+    if (_currentPage < _pages.length - 1) {
+      _pageController.nextPage(
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeInOut,
+      );
+    }
+  }
+
+  void _goToPrevious() {
+    if (_currentPage > 0) {
+      _pageController.previousPage(
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeInOut,
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    if (_pages.isEmpty) {
-      return _EmptyState();
-    }
+    if (_pages.isEmpty) return const _EmptyState();
+
+    final topPadding = MediaQuery.of(context).padding.top;
 
     return Scaffold(
-      backgroundColor: const Color(0xFF0D0A1A),
+      backgroundColor: const Color(0xFF12121A),
       body: Stack(
         children: [
+          // background
           Container(
             decoration: const BoxDecoration(
               gradient: RadialGradient(
                 center: Alignment(0, -0.3),
                 radius: 1.2,
-                colors: [Color(0xFF1E1040), Color(0xFF0D0A1A)],
+                colors: [Color(0xFF1C1C26), Color(0xFF12121A)],
               ),
             ),
           ),
+
+          // page content
           PageView.builder(
             controller: _pageController,
             itemCount: _pages.length,
@@ -66,15 +86,43 @@ class _StatisticsDetailsScreenState extends State<StatisticsDetailsScreen> {
               };
             },
           ),
-          if (_pages.length > 1)
-            Positioned(
-              bottom: 48,
-              left: 0,
-              right: 0,
-              child: PageDots(count: _pages.length, current: _currentPage),
+
+          // tap zones — left/right navigation
+          Positioned.fill(
+            child: Row(
+              children: [
+                // left tap — go back
+                Expanded(
+                  child: GestureDetector(
+                    behavior: HitTestBehavior.translucent,
+                    onTap: _goToPrevious,
+                  ),
+                ),
+                // right tap — go forward
+                Expanded(
+                  child: GestureDetector(
+                    behavior: HitTestBehavior.translucent,
+                    onTap: _goToNext,
+                  ),
+                ),
+              ],
             ),
+          ),
+
+          // progress bar at top
           Positioned(
-            top: MediaQuery.of(context).padding.top + 16,
+            top: topPadding + 12,
+            left: 16,
+            right: 16,
+            child: PageDots(
+              count: _pages.length,
+              current: _currentPage,
+            ),
+          ),
+
+          // back button below the bar
+          Positioned(
+            top: topPadding + 28,
             left: 16,
             child: StatsBackButton(onTap: () => Navigator.pop(context)),
           ),
@@ -90,7 +138,7 @@ class _EmptyState extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF0D0A1A),
+      backgroundColor: const Color(0xFF12121A),
       body: Center(
         child: Text(
           'No data for this day',

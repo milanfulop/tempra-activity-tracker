@@ -3,27 +3,26 @@ import '../../../models/statistics_models.dart';
 
 class DailySummaryPage extends StatelessWidget {
   final DailySummary summary;
-
   const DailySummaryPage({super.key, required this.summary});
 
   @override
   Widget build(BuildContext context) {
     return SafeArea(
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(24, 64, 24, 80),
+        padding: const EdgeInsets.fromLTRB(24, 72, 24, 80),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              'Daily Summary',
+            Text(
+              'DAILY SUMMARY',
               style: TextStyle(
-                color: Colors.white54,
-                fontSize: 12,
+                color: Colors.white.withOpacity(0.35),
+                fontSize: 11,
                 letterSpacing: 2,
                 fontWeight: FontWeight.w500,
               ),
             ),
-            const SizedBox(height: 32),
+            const SizedBox(height: 40),
             BigStat(
               value: '${summary.trackedPercent.toStringAsFixed(1)}%',
               label: 'of your day tracked',
@@ -56,7 +55,7 @@ class BigStat extends StatelessWidget {
     required this.value,
     required this.label,
     required this.sublabel,
-    this.accentColor = const Color(0xFFB794F4),
+    this.accentColor = Colors.white,
   });
 
   @override
@@ -64,29 +63,36 @@ class BigStat extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          value,
-          style: TextStyle(
-            fontSize: 56,
-            fontWeight: FontWeight.w700,
-            color: accentColor,
-            letterSpacing: -2,
-            height: 1,
+        RichText(
+          text: TextSpan(
+            children: [
+              TextSpan(
+                text: value,
+                style: TextStyle(
+                  fontSize: 48,
+                  fontWeight: FontWeight.w700,
+                  color: accentColor,
+                  letterSpacing: -1.5,
+                  height: 1,
+                ),
+              ),
+              TextSpan(
+                text: '  $label',
+                style: TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w300,
+                  color: Colors.white.withOpacity(0.4),
+                  letterSpacing: 0.2,
+                ),
+              ),
+            ],
           ),
         ),
         const SizedBox(height: 4),
         Text(
-          label,
-          style: const TextStyle(
-            color: Colors.white70,
-            fontSize: 16,
-            fontWeight: FontWeight.w300,
-          ),
-        ),
-        Text(
           sublabel,
           style: TextStyle(
-            color: Colors.white.withOpacity(0.3),
+            color: Colors.white.withOpacity(0.25),
             fontSize: 13,
           ),
         ),
@@ -97,7 +103,6 @@ class BigStat extends StatelessWidget {
 
 class LongestBlock extends StatelessWidget {
   final DailySummary summary;
-
   const LongestBlock({super.key, required this.summary});
 
   @override
@@ -107,15 +112,18 @@ class LongestBlock extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white.withOpacity(0.05),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Colors.white.withOpacity(0.08)),
+        border: Border.all(
+          color: Colors.white.withOpacity(0.08),
+          width: 1.2,
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Longest Activity',
+            'LONGEST ACTIVITY',
             style: TextStyle(
-              color: Colors.white.withOpacity(0.4),
+              color: Colors.white.withOpacity(0.35),
               fontSize: 11,
               letterSpacing: 1.5,
             ),
@@ -135,7 +143,7 @@ class LongestBlock extends StatelessWidget {
               Text(
                 '${summary.longestStartTime} → ${summary.longestEndTime}',
                 style: TextStyle(
-                  color: Colors.white.withOpacity(0.5),
+                  color: Colors.white.withOpacity(0.4),
                   fontSize: 13,
                 ),
               ),
