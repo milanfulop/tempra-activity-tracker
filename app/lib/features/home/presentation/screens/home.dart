@@ -59,16 +59,44 @@ class _HomePageContentState extends State<_HomePageContent> {
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
-        title: const Text('Today',
-            style: TextStyle(color: Colors.white70)),
+        scrolledUnderElevation: 0,
+        title: const Text(
+          'Today',
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 18,
+            fontWeight: FontWeight.w600,
+            letterSpacing: 0.3,
+          ),
+        ),
         actions: [
           Consumer<TimeSlotProvider>(
             builder: (context, provider, _) {
               if (provider.selectedIndices.isEmpty) return const SizedBox();
-              return TextButton(
-                onPressed: provider.clearSelection,
-                child: const Text('Cancel',
-                    style: TextStyle(color: Colors.white70)),
+              return Padding(
+                padding: const EdgeInsets.only(right: 12),
+                child: GestureDetector(
+                  onTap: provider.clearSelection,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.08),
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(
+                        color: Colors.white.withOpacity(0.12),
+                        width: 1.2,
+                      ),
+                    ),
+                    child: Text(
+                      'Cancel',
+                      style: TextStyle(
+                        color: Colors.white.withOpacity(0.7),
+                        fontSize: 13,
+                        fontWeight: FontWeight.w400,
+                      ),
+                    ),
+                  ),
+                ),
               );
             },
           ),
