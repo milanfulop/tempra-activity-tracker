@@ -1,0 +1,39 @@
+config {
+  type: "table",
+  schema: "dims",
+  description: "Date dimension table"
+}
+
+WITH date_spine AS (
+  SELECT date
+  FROM UNNEST(
+    GENERATE_DATE_ARRAY('2026-01-01', DATE_ADD(CURRENT_DATE(), INTERVAL 1 YEAR))
+  ) AS date
+)
+
+SELECT
+  date                                          AS date_id,
+  date                                          AS full_date,
+
+  -- Basic
+  EXTRACT(YEAR FROM date)                       AS year,
+  EXTRACT(MONTH FROM date)                      AS month,
+  EXTRACT(DAY FROM date)                        AS day,
+  EXTRACT(DAYOFWEEK FROM date)                  AS day_of_week,      -- 1=Sunday, 7=Saturday
+  EXTRACT(WEEK FROM date)                       AS week_of_year,
+  EXTRACT(QUARTER FROM date)                    AS quarter,
+
+  -- Labels
+  FORMAT_DATE('%A', date)                       AS day_name,         -- Monday, Tuesday...
+  FORMAT_DATE('%B', date)                       AS month_name,       -- January, February...
+
+  -- Flags
+  EXTRACT(DAYOFWEEK FROM date) IN (1, 7)        AS is_weekend,
+  EXTRACT(DAYOFWEEK FROM date) NOT IN (1, 7)    AS is_weekday,
+
+  -- Relative
+  DATE_DIFF(CURRENT_DATE(), date, DAY)          AS days_ago,
+  date = CURRENT_DATE()                         AS is_today
+
+FROM date_spine
+ORDER BY date

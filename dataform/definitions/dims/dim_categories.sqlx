@@ -1,0 +1,23 @@
+config {
+  type: "incremental",
+  schema: "dims",
+  description: "Category dimension table",
+  uniqueKey: ["category_id"],
+  bigquery: {
+    partitionBy: "created_date_id",
+    clusterBy: ["user_id"]
+  }
+}
+
+SELECT
+  CAST(id AS STRING)               AS category_id,
+  CAST(user_id AS STRING)          AS user_id,
+  CAST(name AS STRING)             AS category_name,
+  CAST(color AS STRING)            AS category_color,
+  CAST(is_productive AS BOOL)      AS is_productive,
+  CAST(is_sleep AS BOOL)           AS is_sleep,
+  CAST(created_at AS DATE)         AS created_date_id
+
+FROM ${ref("categories")}
+
+${when(incremental(), `WHERE created_at > (SELECT max(created_date_id) FROM ${self()})` )}
