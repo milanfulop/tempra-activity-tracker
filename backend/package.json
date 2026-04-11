@@ -5,6 +5,7 @@
   "main": "server.ts",
   "scripts": {
     "dev": "nodemon src/server.ts",
+    "start": "tsx src/server.ts",
     "token": "ts-node getUserToken.ts",
     "test": "vitest"
   },
