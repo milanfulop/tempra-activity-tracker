@@ -39,7 +39,7 @@ Why: When you log in or save a 15-minute block, the app needs to find your recor
 ### OLAP (BigQuery)
 Why: To give you a stats view, the app has to scan (possibly) thousands of rows to calculate averages and percentages. Doing this in Supabase would slow the app down as it scales. BigQuery is built for these massive multi-row scans by enabling clustering and partitioning.
 
-### 📈 Optimization
+## 📈 Optimization
 To keep the app fast and the costs low, I used techniques such as:
 - Partitioning (by Date): I put data into "buckets" based on the day. When the app asks for "this week's stats," BigQuery only looks at those 7 buckets instead of scanning the whole database.
 - Clustering (by User ID): Inside those date buckets, I group all data by the user_id. This means if the app grows to 10,000 users, BigQuery can jump much faster to your data without reading everyone else's.
