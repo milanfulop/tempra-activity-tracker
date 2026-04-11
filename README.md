@@ -1,4 +1,4 @@
-# ⏳ Tempra
+# Tempra
 
 Tempra turns paper time-tracking into a simple digital grid, giving you the real-time stats you need to stop wasting precious hours. The project was inspired by an experiment shared in this [POV article](https://bookbase.substack.com/p/pov-11-konyv-7-kozos-pont?utm_source=substack&publication_id=1116676&post_id=188358380&utm_medium=email&utm_content=share&utm_campaign=email-share&action=share&isFreemail=true&r=2y2ee7&triedRedirect=true), which used a manual paper-based system to track time and optimize focus.
 
