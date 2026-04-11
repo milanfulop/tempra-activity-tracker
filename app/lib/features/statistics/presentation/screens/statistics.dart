@@ -7,6 +7,7 @@ import '../widgets/period_bar.dart';
 import '../widgets/date_bar.dart';
 import '../widgets/insight_text.dart';
 import '../widgets/insight_skeleton.dart';
+import '../../utils/statistics_cache_service.dart';
 
 class StatisticsScreen extends StatefulWidget {
   const StatisticsScreen({super.key});
@@ -22,6 +23,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
   String? _error;
   StatInsight? _insight;
   StatsResponse? _stats;
+  final Map<String, StatsResponse> _memoryCache = {};
 
   @override
   void initState() {
@@ -30,32 +32,87 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
   }
 
   Future<void> _fetchData() async {
+    final dateStr = DateFormat('yyyy-MM-dd').format(_selectedDate);
+    final cacheKey = '${dateStr}_${_selectedPeriod.queryValue}';
+
+    // 1. memory cache
+    if (_memoryCache.containsKey(cacheKey)) {
+      setState(() {
+        _stats = _memoryCache[cacheKey];
+        _insight = StatInsight.fromResponse(_memoryCache[cacheKey]!);
+        _isLoading = false;
+        _error = null;
+      });
+      return;
+    }
+
+    // 2. disk cache — show while fetching fresh
+    final cached = await StatsCacheService.load(cacheKey);
+    if (cached != null && mounted) {
+      final response = StatsResponse.fromJson(cached);
+      _memoryCache[cacheKey] = response;
+      setState(() {
+        _stats = response;
+        _insight = StatInsight.fromResponse(response);
+      });
+      _preloadAdjacent();
+      return;
+    }
+
     setState(() {
       _isLoading = true;
       _error = null;
-      _insight = null;
-      _stats = null;
     });
 
+    // 3. network — always fetch fresh
     try {
-      final dateStr = DateFormat('yyyy-MM-dd').format(_selectedDate);
       final data = await ApiService.get(
         '/stats?date=$dateStr&stats=${_selectedPeriod.queryValue},time_distribution',
       );
 
-      final response = StatsResponse.fromJson(data as Map<String, dynamic>);
+      await StatsCacheService.save(cacheKey, data as Map<String, dynamic>);
 
-      setState(() {
-        _isLoading = false;
-        _stats = response;
-        _insight = StatInsight.fromResponse(response);
-      });
+      final response = StatsResponse.fromJson(data);
+      _memoryCache[cacheKey] = response;
+
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+          _stats = response;
+          _insight = StatInsight.fromResponse(response);
+        });
+        _preloadAdjacent();
+      }
     } catch (e) {
-      setState(() {
-        _isLoading = false;
-        _error = e.toString();
-      });
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+          if (_stats == null) _error = e.toString();
+        });
+      }
     }
+  }
+
+  Future<void> _preloadAdjacent() async {
+    final date = _selectedDate.subtract(const Duration(days: 1));
+    final dateStr = DateFormat('yyyy-MM-dd').format(date);
+    final cacheKey = '${dateStr}_${_selectedPeriod.queryValue}';
+
+    if (_memoryCache.containsKey(cacheKey)) return;
+
+    final cached = await StatsCacheService.load(cacheKey);
+    if (cached != null) {
+      _memoryCache[cacheKey] = StatsResponse.fromJson(cached);
+      return;
+    }
+
+    try {
+      final data = await ApiService.get(
+        '/stats?date=$dateStr&stats=${_selectedPeriod.queryValue},time_distribution',
+      );
+      await StatsCacheService.save(cacheKey, data as Map<String, dynamic>);
+      _memoryCache[cacheKey] = StatsResponse.fromJson(data);
+    } catch (_) {}
   }
 
   void _goToPreviousDay() {
@@ -143,7 +200,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                   Align(
                     alignment: Alignment.centerLeft,
                     child: AnimatedSwitcher(
-                        duration: const Duration(milliseconds: 400),
+                        duration: const Duration(milliseconds: 0),
                         child: _isLoading
                             ? const InsightSkeleton()
                             : _error != null

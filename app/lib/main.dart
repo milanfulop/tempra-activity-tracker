@@ -16,6 +16,7 @@ import './core/config.dart';
 import './shared/main_scaffold.dart';
 import './shared/utils/notification_service.dart';
 import './features/settings/presentation/screens/settings.dart';
+import './features/home/utils/time_slot_provider.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -149,8 +150,11 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ChangeNotifierProvider(
-      create: (_) => CategoryProvider(),
+    return MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => CategoryProvider()),
+        ChangeNotifierProvider(create: (_) => TimeSlotProvider()),
+      ],
       child: MaterialApp.router(
         routerConfig: _router,
         theme: ThemeData(

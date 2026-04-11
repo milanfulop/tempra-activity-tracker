@@ -10,10 +10,7 @@ class HomePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ChangeNotifierProvider(
-      create: (_) => TimeSlotProvider(),
-      child: const _HomePageContent(),
-    );
+    return const _HomePageContent();
   }
 }
 
