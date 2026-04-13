@@ -8,6 +8,7 @@ import '../widgets/date_bar.dart';
 import '../widgets/insight_text.dart';
 import '../widgets/insight_skeleton.dart';
 import '../../utils/statistics_cache_service.dart';
+import '../../../../shared/utils/user_profile_fetch.dart';
 
 class StatisticsScreen extends StatefulWidget {
   const StatisticsScreen({super.key});
@@ -25,11 +26,47 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
   StatsResponse? _stats;
   final Map<String, StatsResponse> _memoryCache = {};
 
+  // earliest date the user can navigate back to.
+  DateTime? _createdAt;
+
   @override
   void initState() {
     super.initState();
     _fetchData();
+    _loadCreatedAt();
   }
+
+  Future<void> _loadCreatedAt() async {
+    try {
+      final date = await UserProfileService.getCreatedAt();
+      if (mounted) {
+        setState(() {
+          _createdAt = DateTime(date.year, date.month, date.day);
+        });
+      }
+    } catch (_) {
+    }
+  }
+
+  // ── navigation guards ────────────────────────────────────────────────────
+
+  bool get _canGoBack {
+    if (_createdAt == null) return true; // not yet loaded, allow
+    final selectedDateOnly = DateTime(
+      _selectedDate.year,
+      _selectedDate.month,
+      _selectedDate.day,
+    );
+    return selectedDateOnly.isAfter(_createdAt!);
+  }
+
+  bool get _canGoForward {
+    final yesterday = DateTime.now().subtract(const Duration(days: 1));
+    return _selectedDate.isBefore(yesterday) &&
+        !_isSameDay(_selectedDate, yesterday);
+  }
+
+  // ── data fetching ────────────────────────────────────────────────────────
 
   Future<void> _fetchData() async {
     final dateStr = DateFormat('yyyy-MM-dd').format(_selectedDate);
@@ -115,16 +152,18 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
     } catch (_) {}
   }
 
+  // ── navigation actions ───────────────────────────────────────────────────
+
   void _goToPreviousDay() {
+    if (!_canGoBack) return;
     setState(() => _selectedDate = _selectedDate.subtract(const Duration(days: 1)));
     _fetchData();
   }
 
   void _goToNextDay() {
-    if (_canGoForward) {
-      setState(() => _selectedDate = _selectedDate.add(const Duration(days: 1)));
-      _fetchData();
-    }
+    if (!_canGoForward) return;
+    setState(() => _selectedDate = _selectedDate.add(const Duration(days: 1)));
+    _fetchData();
   }
 
   void _onPeriodChanged(StatPeriod period) {
@@ -138,7 +177,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
     if (velocity < -velocityThreshold) {
       if (_canGoForward) _goToNextDay();
     } else if (velocity > velocityThreshold) {
-      _goToPreviousDay();
+      if (_canGoBack) _goToPreviousDay();
     }
   }
 
@@ -147,6 +186,8 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
       context.push('/statistics-details', extra: _stats);
     }
   }
+
+  // ── helpers ──────────────────────────────────────────────────────────────
 
   String get _formattedDate {
     final now = DateTime.now();
@@ -159,13 +200,9 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
   bool _isSameDay(DateTime a, DateTime b) =>
       a.year == b.year && a.month == b.month && a.day == b.day;
 
-  bool get _canGoForward {
-    final yesterday = DateTime.now().subtract(const Duration(days: 1));
-    return _selectedDate.isBefore(yesterday) &&
-        !_isSameDay(_selectedDate, yesterday);
-  }
-
   bool get _hasData => _stats != null && !_stats!.isEmpty;
+
+  // ── build ────────────────────────────────────────────────────────────────
 
   @override
   Widget build(BuildContext context) {
@@ -200,15 +237,15 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                   Align(
                     alignment: Alignment.centerLeft,
                     child: AnimatedSwitcher(
-                        duration: const Duration(milliseconds: 0),
-                        child: _isLoading
-                            ? const InsightSkeleton()
-                            : _error != null
-                                ? const InsightError()
-                                : _insight != null
-                                    ? InsightText(insight: _insight!)
-                                    : const SizedBox.shrink(),
-                      ),
+                      duration: const Duration(milliseconds: 0),
+                      child: _isLoading
+                          ? const InsightSkeleton()
+                          : _error != null
+                              ? const InsightError()
+                              : _insight != null
+                                  ? InsightText(insight: _insight!)
+                                  : const SizedBox.shrink(),
+                    ),
                   ),
 
                   const SizedBox(height: 64),
@@ -242,7 +279,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
               right: 24,
               child: DateBar(
                 label: _formattedDate,
-                onPrevious: _goToPreviousDay,
+                onPrevious: _canGoBack ? _goToPreviousDay : null,
                 onNext: _canGoForward ? _goToNextDay : null,
               ),
             ),

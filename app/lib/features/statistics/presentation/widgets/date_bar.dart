@@ -3,7 +3,7 @@ import 'package:flutter/cupertino.dart';
 
 class DateBar extends StatelessWidget {
   final String label;
-  final VoidCallback onPrevious;
+  final VoidCallback? onPrevious;
   final VoidCallback? onNext;
 
   const DateBar({
@@ -28,7 +28,11 @@ class DateBar extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          _NavButton(icon: CupertinoIcons.chevron_left, onTap: onPrevious),
+          _NavButton(
+            icon: CupertinoIcons.chevron_left, 
+            onTap: onPrevious,
+            disabled: onPrevious == null,
+          ),
           Text(
             label,
             style: const TextStyle(
