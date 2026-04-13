@@ -40,13 +40,18 @@ class NotificationService {
   }
 
   Future<bool> requestPermission() async {
-    final android = await _plugin
-        .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()
-        ?.requestNotificationsPermission();
+    final android = _plugin.resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
+
+    // request exact alarm permission (Android 12+)
+    await android?.requestExactAlarmsPermission();
+
+    // request notification permission (Android 13+)
+    final canNotify = await android?.requestNotificationsPermission();
     final ios = await _plugin
         .resolvePlatformSpecificImplementation<IOSFlutterLocalNotificationsPlugin>()
         ?.requestPermissions(alert: true, badge: true, sound: true);
-    return android ?? ios ?? false;
+
+    return canNotify ?? ios ?? false;
   }
 
   /// Schedules interval reminders every [intervalHours] hours,
@@ -75,6 +80,7 @@ class NotificationService {
     while (scheduled < 48) {
       final h = candidate.hour;
       if (h >= startHour && h < endHour) {
+        // print('scheduling notification at: $candidate');
         await _plugin.zonedSchedule(
           id++,
           'Time to log! ⏱',
@@ -89,8 +95,14 @@ class NotificationService {
         );
         scheduled++;
       }
+      
       candidate = candidate.add(Duration(minutes: intervalMinutes));
     }
+
+    // final pending = await NotificationService.instance._plugin.pendingNotificationRequests();
+    // print('scheduled count: ${pending.length}');
+
+    
   }
 
   /// Schedules one notification per day at [hour]:[minute].
@@ -138,6 +150,28 @@ class NotificationService {
     );
   }
 
+  Future<void> rescheduleIfNeeded() async {
+    final settings = await loadSettings();
+    if (!(settings['enabled'] as bool)) return;
+
+    final pending = await _plugin.pendingNotificationRequests();
+    if (pending.length > 5) return;
+
+    final mode = settings['mode'] as ReminderMode;
+    if (mode == ReminderMode.interval) {
+      await scheduleIntervalReminders(
+        intervalMinutes: settings['intervalMinutes'] as int,
+        startHour: settings['startHour'] as int,
+        endHour: settings['endHour'] as int,
+      );
+    } else {
+      await scheduleDailyReminder(
+        hour: settings['dailyHour'] as int,
+        minute: settings['dailyMinute'] as int,
+      );
+    }
+  }
+
   Future<void> cancelAllReminders() async {
     for (int i = 100; i < 150; i++) await _plugin.cancel(i);
     await _plugin.cancel(200);
@@ -169,7 +203,11 @@ class NotificationService {
       'mode': ReminderMode.values.byName(
         prefs.getString(_keyMode) ?? ReminderMode.interval.name,
       ),
-      'intervalMinutes': prefs.getInt(_keyIntervalMinutes) ?? 60,
+      'intervalMinutes': () {
+        final saved = prefs.getInt(_keyIntervalMinutes) ?? 60;
+        const validValues = [15, 60, 120, 240];
+        return validValues.contains(saved) ? saved : 60;
+      }(),
       'startHour': prefs.getInt(_keyStartHour) ?? 8,
       'endHour': prefs.getInt(_keyEndHour) ?? 22,
       'dailyHour': prefs.getInt(_keyDailyHour) ?? 20,
@@ -177,7 +215,8 @@ class NotificationService {
     };
   }
 
-  /*Future<void> scheduleTestNotification() async {
+/*
+  Future<void> scheduleTestNotification() async {
     const details = NotificationDetails(
       android: AndroidNotificationDetails(
         _channelId,
@@ -190,8 +229,8 @@ class NotificationService {
 
     final now = tz.TZDateTime.now(tz.local);
     final scheduled = now.add(const Duration(seconds: 15));
-    print('now: $now');
-    print('scheduled for: $scheduled');
+    // print('now: $now');
+    // print('scheduled for: $scheduled');
 
     await _plugin.zonedSchedule(
       999,
@@ -204,10 +243,11 @@ class NotificationService {
           UILocalNotificationDateInterpretation.absoluteTime,
     );
 
-    final pending = await _plugin.pendingNotificationRequests();
-    print('pending count: ${pending.length}');
-    for (final n in pending) {
-      print('pending: ${n.id} ${n.title}');
-    }
-  }*/
+    // final pending = await _plugin.pendingNotificationRequests();
+    // print('pending count: ${pending.length}');
+    // for (final n in pending) {
+    //   print('pending: ${n.id} ${n.title}');
+    // }
+  }
+  */
 }

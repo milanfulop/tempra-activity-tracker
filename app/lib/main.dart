@@ -38,6 +38,7 @@ Future<void> main() async {
   });
 
   await NotificationService.instance.init();
+  await NotificationService.instance.rescheduleIfNeeded();
 
   runApp(const MyApp());
 }
