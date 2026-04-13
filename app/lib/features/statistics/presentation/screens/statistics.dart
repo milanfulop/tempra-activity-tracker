@@ -192,7 +192,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
   String get _formattedDate {
     final now = DateTime.now();
     final yesterday = now.subtract(const Duration(days: 1));
-    if (_isSameDay(_selectedDate, now)) return 'Today';
+    if (_isSameDay(_createdAt ?? yesterday, now)) return "Check back tomorrow";
     if (_isSameDay(_selectedDate, yesterday)) return 'Yesterday';
     return DateFormat('d MMM yyyy').format(_selectedDate);
   }
@@ -257,7 +257,9 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                     child: Text(
                       _hasData
                           ? 'Tap for details'
-                          : 'No data recorded for this day',
+                          : _isSameDay(_createdAt ?? _selectedDate, DateTime.now())
+                              ? "It's your first day here!"
+                              : 'No data recorded for this day',
                       style: TextStyle(
                         color: Colors.white.withOpacity(0.2),
                         fontSize: 12,
@@ -266,7 +268,6 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                       ),
                     ),
                   ),
-
                   const SizedBox(height: 100),
                 ],
               ),
