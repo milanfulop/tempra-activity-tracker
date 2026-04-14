@@ -63,3 +63,4 @@ yarl==1.23.0
 zstandard==0.25.0
 tenacity
 dotenv
+google-cloud-dataform
