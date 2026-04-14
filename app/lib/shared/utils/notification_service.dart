@@ -3,6 +3,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:timezone/data/latest_all.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
 import 'package:flutter_timezone/flutter_timezone.dart';
+import 'dart:io';
+import 'package:permission_handler/permission_handler.dart';
 
 enum ReminderMode { interval, daily }
 
@@ -63,6 +65,16 @@ class NotificationService {
     final canNotify = await android?.requestNotificationsPermission();
     final ios = await _plugin.resolvePlatformSpecificImplementation<IOSFlutterLocalNotificationsPlugin>()
         ?.requestPermissions(alert: true, badge: true, sound: true);
+
+  // Ask user to exempt app from battery optimization
+  final deviceInfo = _plugin.resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
+  await deviceInfo?.requestExactAlarmsPermission();
+
+  // Also request battery optimization exemption
+  if (Platform.isAndroid) {
+    await Permission.ignoreBatteryOptimizations.request();
+  }
+
     return canNotify ?? ios ?? false;
   }
 
