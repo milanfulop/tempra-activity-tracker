@@ -14,6 +14,7 @@ class NotificationService {
 
   static const _channelId = 'tempra_reminders';
   static const _channelName = 'Tempra Reminders';
+  static const _batchSize = 5;
 
   static const _keyEnabled = 'notif_enabled';
   static const _keyMode = 'notif_mode';
@@ -23,9 +24,19 @@ class NotificationService {
   static const _keyDailyHour = 'notif_daily_hour';
   static const _keyDailyMinute = 'notif_daily_minute';
 
+  static const _details = NotificationDetails(
+    android: AndroidNotificationDetails(
+      _channelId,
+      _channelName,
+      importance: Importance.high,
+      priority: Priority.high,
+    ),
+    iOS: DarwinNotificationDetails(),
+  );
+
   Future<void> init() async {
     tz.initializeTimeZones();
-    final String localTimezone = await FlutterTimezone.getLocalTimezone();
+    final localTimezone = await FlutterTimezone.getLocalTimezone();
     tz.setLocalLocation(tz.getLocation(localTimezone));
 
     const android = AndroidInitializationSettings('@mipmap/ic_launcher');
@@ -36,26 +47,27 @@ class NotificationService {
     );
     await _plugin.initialize(
       const InitializationSettings(android: android, iOS: ios),
+      onDidReceiveNotificationResponse: (_) => _onNotificationFired(),
+      onDidReceiveBackgroundNotificationResponse: _backgroundNotificationHandler,
     );
+  }
+
+  // Called when a notification fires while app is in foreground
+  void _onNotificationFired() {
+    rescheduleIfNeeded();
   }
 
   Future<bool> requestPermission() async {
     final android = _plugin.resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
-
-    // request exact alarm permission (Android 12+)
     await android?.requestExactAlarmsPermission();
-
-    // request notification permission (Android 13+)
     final canNotify = await android?.requestNotificationsPermission();
-    final ios = await _plugin
-        .resolvePlatformSpecificImplementation<IOSFlutterLocalNotificationsPlugin>()
+    final ios = await _plugin.resolvePlatformSpecificImplementation<IOSFlutterLocalNotificationsPlugin>()
         ?.requestPermissions(alert: true, badge: true, sound: true);
-
     return canNotify ?? ios ?? false;
   }
 
-  /// Schedules interval reminders every [intervalHours] hours,
-  /// only firing between [startHour] and [endHour] (24h).
+  /// Schedules the next [_batchSize] interval notifications from now,
+  /// skipping slots outside [startHour]..[endHour].
   Future<void> scheduleIntervalReminders({
     required int intervalMinutes,
     required int startHour,
@@ -64,66 +76,50 @@ class NotificationService {
     await cancelAllReminders();
 
     final now = tz.TZDateTime.now(tz.local);
-    const details = NotificationDetails(
-      android: AndroidNotificationDetails(
-        _channelId,
-        _channelName,
-        importance: Importance.high,
-        priority: Priority.high,
-      ),
-      iOS: DarwinNotificationDetails(),
-    );
+    final futures = <Future>[];
     int id = 100;
 
     tz.TZDateTime candidate = now.add(Duration(minutes: intervalMinutes));
     int scheduled = 0;
-    while (scheduled < 48) {
+
+    // Walk forward until we've queued _batchSize valid slots
+    while (scheduled < _batchSize) {
       final h = candidate.hour;
       if (h >= startHour && h < endHour) {
-        // print('scheduling notification at: $candidate');
-        await _plugin.zonedSchedule(
+        final body = intervalMinutes < 60
+            ? 'What have you been up to the last $intervalMinutes minutes?'
+            : 'What have you been up to the last ${intervalMinutes ~/ 60} '
+                'hour${intervalMinutes > 60 ? 's' : ''}?';
+
+        futures.add(_plugin.zonedSchedule(
           id++,
           'Time to log! ⏱',
-          intervalMinutes < 60
-              ? 'What have you been up to the last $intervalMinutes minutes?'
-              : 'What have you been up to the last ${intervalMinutes ~/ 60} hour${intervalMinutes > 60 ? 's' : ''}?',
+          body,
           candidate,
-          details,
+          _details,
           androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
           uiLocalNotificationDateInterpretation:
               UILocalNotificationDateInterpretation.absoluteTime,
-        );
+        ));
         scheduled++;
       }
-      
       candidate = candidate.add(Duration(minutes: intervalMinutes));
+
+      // Safety guard: don't loop forever if window is too narrow
+      if (candidate.difference(now).inDays > 7) break;
     }
 
-    // final pending = await NotificationService.instance._plugin.pendingNotificationRequests();
-    // print('scheduled count: ${pending.length}');
-
-    
+    await Future.wait(futures);
   }
 
-  /// Schedules one notification per day at [hour]:[minute].
+  /// Schedules one daily notification at [hour]:[minute] (repeating).
   Future<void> scheduleDailyReminder({
     required int hour,
     required int minute,
   }) async {
     await cancelAllReminders();
 
-    const details = NotificationDetails(
-      android: AndroidNotificationDetails(
-        _channelId,
-        _channelName,
-        importance: Importance.high,
-        priority: Priority.high,
-      ),
-      iOS: DarwinNotificationDetails(),
-    );
-
     final now = tz.TZDateTime.now(tz.local);
-
     tz.TZDateTime scheduledTime = tz.TZDateTime(
       tz.local,
       now.year,
@@ -132,7 +128,6 @@ class NotificationService {
       hour,
       minute,
     );
-    // if today's time already passed, start tomorrow
     if (scheduledTime.isBefore(now)) {
       scheduledTime = scheduledTime.add(const Duration(days: 1));
     }
@@ -142,39 +137,53 @@ class NotificationService {
       'Daily log reminder 📋',
       'Take a moment to fill in your day.',
       scheduledTime,
-      details,
+      _details,
       androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
       uiLocalNotificationDateInterpretation:
           UILocalNotificationDateInterpretation.absoluteTime,
-      matchDateTimeComponents: DateTimeComponents.time, // repeats daily
+      matchDateTimeComponents: DateTimeComponents.time,
     );
   }
 
+  /// Call on app start and whenever a notification fires.
+  /// Tops up the batch if fewer than 2 are left pending.
   Future<void> rescheduleIfNeeded() async {
-    final settings = await loadSettings();
-    if (!(settings['enabled'] as bool)) return;
+    try {
+      final settings = await loadSettings();
+      if (!(settings['enabled'] as bool)) return;
 
-    final pending = await _plugin.pendingNotificationRequests();
-    if (pending.length > 5) return;
+      final mode = settings['mode'] as ReminderMode;
 
-    final mode = settings['mode'] as ReminderMode;
-    if (mode == ReminderMode.interval) {
+      // Daily mode manages itself via matchDateTimeComponents
+      if (mode == ReminderMode.daily) {
+        final pending = await _plugin.pendingNotificationRequests();
+        if (pending.any((n) => n.id == 200)) return; // already scheduled
+        await scheduleDailyReminder(
+          hour: settings['dailyHour'] as int,
+          minute: settings['dailyMinute'] as int,
+        );
+        return;
+      }
+
+      // Interval mode: top up when running low
+      final pending = await _plugin.pendingNotificationRequests();
+      if (pending.length >= 2) return;
+
       await scheduleIntervalReminders(
         intervalMinutes: settings['intervalMinutes'] as int,
         startHour: settings['startHour'] as int,
         endHour: settings['endHour'] as int,
       );
-    } else {
-      await scheduleDailyReminder(
-        hour: settings['dailyHour'] as int,
-        minute: settings['dailyMinute'] as int,
-      );
+    } catch (e) {
+      print('rescheduleIfNeeded failed: $e');
     }
   }
 
   Future<void> cancelAllReminders() async {
-    for (int i = 100; i < 150; i++) await _plugin.cancel(i);
-    await _plugin.cancel(200);
+    await Future.wait([
+      for (int i = 100; i < 100 + _batchSize; i++) _plugin.cancel(i),
+      _plugin.cancel(200),
+    ]);
   }
 
   Future<void> saveSettings({
@@ -214,6 +223,12 @@ class NotificationService {
       'dailyMinute': prefs.getInt(_keyDailyMinute) ?? 0,
     };
   }
+}
+
+@pragma('vm:entry-point')
+void _backgroundNotificationHandler(NotificationResponse response) {
+  NotificationService.instance.rescheduleIfNeeded();
+
 
 /*
   Future<void> scheduleTestNotification() async {
