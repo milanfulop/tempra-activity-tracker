@@ -3,7 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import '../../../../shared/utils/api_service.dart';
 import '../../models/statistics_models.dart';
-import '../widgets/period_bar.dart';
+// import '../widgets/period_bar.dart';
 import '../widgets/date_bar.dart';
 import '../widgets/insight_text.dart';
 import '../widgets/insight_skeleton.dart';
@@ -166,10 +166,10 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
     _fetchData();
   }
 
-  void _onPeriodChanged(StatPeriod period) {
+  /*void _onPeriodChanged(StatPeriod period) {
     setState(() => _selectedPeriod = period);
     _fetchData();
-  }
+  }*/
 
   void _onSwipe(DragEndDetails details) {
     const double velocityThreshold = 200;
@@ -227,12 +227,14 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
             SafeArea(
               child: Column(
                 children: [
+                  /*
                   PeriodBar(
                     selected: _selectedPeriod,
                     onChanged: _onPeriodChanged,
                   ),
+                  */
                   const Spacer(),
-
+                  
                   // insight block — bottom area above date bar
                   Align(
                     alignment: Alignment.centerLeft,
