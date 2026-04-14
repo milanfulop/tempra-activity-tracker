@@ -35,14 +35,13 @@ class CategoryProvider extends ChangeNotifier {
   // ── Create — awaits API, throws on failure, list unchanged if error ───────
 
   Future<void> add(Category category) async {
-    await createCategory(
-      id: category.id,
+    final created = await createCategory(
       name: category.name,
       color: category.color,
       isProductive: category.isProductive,
     );
-    // Only reached if the above didn't throw (i.e. server returned 2xx)
-    _categories = [..._categories, category];
+    // Uses server-assigned ID
+    _categories = [..._categories, created];
     notifyListeners();
   }
 
