@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../../models/statistics_models.dart';
+import '../../../../../shared/provider/category_provider.dart';
 
 class DailySummaryPage extends StatelessWidget {
   final DailySummary summary;
@@ -7,6 +9,7 @@ class DailySummaryPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final categoryProvider = context.read<CategoryProvider>();
     return SafeArea(
       child: Padding(
         padding: const EdgeInsets.fromLTRB(24, 72, 24, 80),
@@ -36,7 +39,7 @@ class DailySummaryPage extends StatelessWidget {
               accentColor: const Color(0xFF68D391),
             ),
             const SizedBox(height: 40),
-            LongestBlock(summary: summary),
+            LongestBlock(summary: summary, categoryProvider: categoryProvider),
           ],
         ),
       ),
@@ -103,10 +106,20 @@ class BigStat extends StatelessWidget {
 
 class LongestBlock extends StatelessWidget {
   final DailySummary summary;
-  const LongestBlock({super.key, required this.summary});
+  final CategoryProvider categoryProvider;
+
+  const LongestBlock({
+    super.key,
+    required this.summary,
+    required this.categoryProvider,
+  });
 
   @override
   Widget build(BuildContext context) {
+    final category = categoryProvider.categories
+        .where((c) => c.id == summary.longestCategoryId)
+        .firstOrNull;
+
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -149,6 +162,17 @@ class LongestBlock extends StatelessWidget {
               ),
             ],
           ),
+          if (category != null) ...[
+            const SizedBox(height: 8),
+            Text(
+              category.name,
+              style: TextStyle(
+                color: category.color.withOpacity(0.9),
+                fontSize: 13,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ],
         ],
       ),
     );
