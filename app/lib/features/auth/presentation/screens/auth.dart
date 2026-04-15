@@ -4,8 +4,8 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../../core/config.dart';
 import '../../../../shared/snackbar.dart';
 import 'package:google_sign_in/google_sign_in.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
+import '../../../../core/env.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -25,11 +25,11 @@ class _LoginPageState extends State<LoginPage> {
         // Use Supabase OAuth flow for web
         await supabase.auth.signInWithOAuth(
           OAuthProvider.google,
-          redirectTo: dotenv.env['REDIRECT_URL'],
+          redirectTo: Env.redirectUrl,
         );
       } else {
         // Use google_sign_in for mobile
-        final serverClientId = dotenv.env['GOOGLE_WEB_CLIENT_ID'];
+        final serverClientId = Env.googleWebClientId;
         final GoogleSignIn googleSignIn = GoogleSignIn(
           serverClientId: serverClientId,
           scopes: ['email', 'profile'],

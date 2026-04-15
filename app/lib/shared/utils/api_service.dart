@@ -1,7 +1,7 @@
 import 'dart:convert';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../core/env.dart';
 
 class ApiService {
   static http.Client _client = http.Client();
@@ -9,7 +9,7 @@ class ApiService {
 
   static String? _testBaseUrl;
   static void setBaseUrl(String url) => _testBaseUrl = url;
-  static String get _baseUrl => _testBaseUrl ?? dotenv.env['HOST_ADDRESS'] ?? '';
+  static String get _baseUrl => _testBaseUrl ?? Env.hostAddress;
 
   static String? _testToken;
   static void setToken(String? token) => _testToken = token;
