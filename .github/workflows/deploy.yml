@@ -21,6 +21,15 @@ jobs:
           channel: stable
           cache: true
 
+      - name: Recreate .env file
+        run: |
+          mkdir -p assets
+          echo "HOST_ADDRESS=${{ secrets.HOST_ADDRESS }}" > assets/.env
+          echo "AUTH_TOKEN=${{ secrets.AUTH_TOKEN }}" >> assets/.env
+          echo "SUPABASE_URL=${{ secrets.SUPABASE_URL }}" >> assets/.env
+          echo "SUPABASE_ANON_KEY=${{ secrets.SUPABASE_ANON_KEY }}" >> assets/.env
+          echo "GOOGLE_WEB_CLIENT_ID=${{ secrets.GOOGLE_WEB_CLIENT_ID }}" >> assets/.env
+
       - run: flutter pub get
       
       - name: Build Flutter Web
@@ -34,6 +43,7 @@ jobs:
         with:
           publish-dir: ./app/build/web 
           production-branch: main
+          production-deploy: true
           github-token: ${{ secrets.GITHUB_TOKEN }}
           enable-commit-comment: true
         env:
