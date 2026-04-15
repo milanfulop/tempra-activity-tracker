@@ -8,6 +8,7 @@ from google.cloud import bigquery
 from google.oauth2 import service_account
 from dotenv import load_dotenv
 from tenacity import retry, stop_after_attempt, wait_exponential
+from google.cloud import dataform_v1beta1
 
 load_dotenv()
 
@@ -23,6 +24,7 @@ SUPABASE_URL = os.environ["SUPABASE_URL"]
 SUPABASE_KEY = os.environ["SUPABASE_SERVICE_KEY"]
 BQ_PROJECT = "activity-tracker-statistics"
 BQ_DATASET = "raw"
+REPOSITORY_ID = "activity-tracker-statistics"
 BQ_CREDENTIALS_JSON = os.environ["BQ_CREDENTIALS_JSON"]
 
 yesterday = (date.today() - timedelta(days=1)).isoformat()
@@ -149,3 +151,32 @@ def upsert_partition(table_id, rows, schema):
 upsert_partition(f"{BQ_PROJECT}.{BQ_DATASET}.entries", entries, entries_schema)
 upsert_simple(f"{BQ_PROJECT}.{BQ_DATASET}.users", users, users_schema, full_replace=upload_all_users)
 upsert_simple(f"{BQ_PROJECT}.{BQ_DATASET}.categories", categories, categories_schema, full_replace=upload_all_categories)
+
+# run dataform
+
+def trigger_dataform():
+    client = dataform_v1beta1.DataformClient(credentials=credentials)
+
+    project_id = BQ_PROJECT
+    region = "europe-central2"
+    repository_id = REPOSITORY_ID
+
+    parent = f"projects/{project_id}/locations/{region}/repositories/{repository_id}"
+
+    compilation = client.create_compilation_result(
+        parent=parent,
+        compilation_result={
+            "git_commitish": "dev",
+        },
+    )
+
+    invocation = client.create_workflow_invocation(
+        parent=parent,
+        workflow_invocation={
+            "compilation_result": compilation.name,
+        },
+    )
+
+    log.info(f"Triggered Dataform run: {invocation.name}")
+
+trigger_dataform()

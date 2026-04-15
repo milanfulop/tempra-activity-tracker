@@ -47,7 +47,7 @@ class _CategoryEditorPageState extends State<CategoryEditorPage> {
 
     try {
       await context.read<CategoryProvider>().add(Category(
-            id: result['id'] as String,
+            id: '',
             name: result['name'] as String,
             color: result['color'] as Color,
             isProductive: result['isProductive'] as bool? ?? false,

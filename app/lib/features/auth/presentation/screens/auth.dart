@@ -5,6 +5,7 @@ import '../../../../core/config.dart';
 import '../../../../shared/snackbar.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -18,30 +19,40 @@ class _LoginPageState extends State<LoginPage> {
 
   Future<void> _signInWithGoogle() async {
     try {
-      final serverClientId = await dotenv.env['GOOGLE_WEB_CLIENT_ID'];
       setState(() => _isLoading = true);
-      final GoogleSignIn googleSignIn = GoogleSignIn(
-        serverClientId: serverClientId,
-        //TODO: add ios clientId
-        scopes: ['email', 'profile'],
-      );
-      final googleUser = await googleSignIn.signIn();
-      if (googleUser == null) {
-        if (mounted) context.showSnackBar('Sign in cancelled', isError: true);
-        return;
-      }
-      final googleAuth = await googleUser.authentication;
-      
-      if (googleAuth.idToken == null) {
-        if (mounted) context.showSnackBar('Could not get token from Google. Try a physical device.', isError: true);
-        return;
-      }
 
-      await supabase.auth.signInWithIdToken(
-        provider: OAuthProvider.google,
-        idToken: googleAuth.idToken!,
-        accessToken: googleAuth.accessToken,
-      );
+      if (kIsWeb) {
+        // Use Supabase OAuth flow for web
+        await supabase.auth.signInWithOAuth(
+          OAuthProvider.google,
+          redirectTo: 'http://localhost:8080/auth/callback',
+        );
+      } else {
+        // Use google_sign_in for mobile
+        final serverClientId = dotenv.env['GOOGLE_WEB_CLIENT_ID'];
+        final GoogleSignIn googleSignIn = GoogleSignIn(
+          serverClientId: serverClientId,
+          scopes: ['email', 'profile'],
+        );
+
+        final googleUser = await googleSignIn.signIn();
+        if (googleUser == null) {
+          if (mounted) context.showSnackBar('Sign in cancelled', isError: true);
+          return;
+        }
+
+        final googleAuth = await googleUser.authentication;
+        if (googleAuth.idToken == null) {
+          if (mounted) context.showSnackBar('Could not get token from Google.', isError: true);
+          return;
+        }
+
+        await supabase.auth.signInWithIdToken(
+          provider: OAuthProvider.google,
+          idToken: googleAuth.idToken!,
+          accessToken: googleAuth.accessToken,
+        );
+      }
     } on AuthException catch (error) {
       if (mounted) context.showSnackBar(error.message, isError: true);
     } catch (e) {

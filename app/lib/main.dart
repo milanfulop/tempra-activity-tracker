@@ -17,6 +17,10 @@ import './shared/main_scaffold.dart';
 import './shared/utils/notification_service.dart';
 import './features/settings/presentation/screens/settings.dart';
 import './features/home/utils/time_slot_provider.dart';
+import './shared/utils/update_service.dart';
+import './shared/screens/update_screen.dart';
+import 'features/auth/callback/auth_callback_page.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -31,15 +35,29 @@ Future<void> main() async {
   await Supabase.initialize(
     url: supabaseUrl,
     anonKey: supabaseAnonKey,
+    authOptions: const FlutterAuthClientOptions(
+      detectSessionInUri: true,
+    ),
   );
 
   supabase.auth.onAuthStateChange.listen((data) {
     print('AUTH STATE: ${data.event} SESSION: ${data.session}');
   });
 
-  await NotificationService.instance.init();
+  bool updateRequired = false;
+  
+  if(!kIsWeb) {
+    await NotificationService.instance.init();
+    await NotificationService.instance.rescheduleIfNeeded();
 
-  runApp(const MyApp());
+    try {
+      updateRequired = !await AppUpdateService.isUpToDate();
+    } catch (_) {
+      updateRequired = false;
+    }
+  }
+
+  runApp(MyApp(updateRequired: updateRequired));
 }
 
 // ─── Token validation helper ──────────────────────────────────────────────────
@@ -48,7 +66,6 @@ bool _isTokenValid() {
   final session = supabase.auth.currentSession;
   if (session == null) return false;
 
-  // expiresAt is in seconds since epoch
   final expiresAt = session.expiresAt;
   if (expiresAt == null) return false;
 
@@ -64,26 +81,21 @@ final _router = GoRouter(
   redirect: (context, state) async {
     final isOnAuth = state.matchedLocation == '/auth';
 
-    // No session at all
     if (supabase.auth.currentSession == null) {
       return isOnAuth ? null : '/auth';
     }
 
-    // Session exists but token is expired — try to refresh first
     if (!_isTokenValid()) {
       try {
         await supabase.auth.refreshSession();
-        // Refresh succeeded, token is valid now
         if (isOnAuth) return '/home';
         return null;
       } catch (_) {
-        // Refresh failed — sign out and redirect to auth
         await supabase.auth.signOut();
         return '/auth';
       }
     }
 
-    // Token is valid
     if (isOnAuth) return '/home';
     return null;
   },
@@ -116,6 +128,10 @@ final _router = GoRouter(
       builder: (context, state) => const LoginPage(),
     ),
     GoRoute(
+      path: '/auth/callback',
+      builder: (context, state) => const AuthCallbackPage(),
+    ),
+    GoRoute(
       path: '/category-editor',
       builder: (context, state) => const CategoryEditorPage(),
     ),
@@ -146,10 +162,19 @@ class GoRouterRefreshStream extends ChangeNotifier {
 // ─── App ──────────────────────────────────────────────────────────────────────
 
 class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+  final bool updateRequired;
+
+  const MyApp({super.key, required this.updateRequired});
 
   @override
   Widget build(BuildContext context) {
+    if (updateRequired) {
+      return const MaterialApp(
+        debugShowCheckedModeBanner: false,
+        home: UpdateRequiredScreen(),
+      );
+    }
+
     return MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => CategoryProvider()),
@@ -157,6 +182,7 @@ class MyApp extends StatelessWidget {
       ],
       child: MaterialApp.router(
         routerConfig: _router,
+        debugShowCheckedModeBanner: false,
         theme: ThemeData(
           colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
           navigationBarTheme: NavigationBarThemeData(

@@ -73,5 +73,7 @@ int timeStringToCellIndex(String time) {
   final parts = time.split(':');
   final hour = int.parse(parts[0]);
   final minute = int.parse(parts[1]);
+  final second = parts.length > 2 ? int.parse(parts[2]) : 0;
+  if (hour == 23 && minute == 59 && second == 59) return 96;
   return (hour * 4) + (minute ~/ 15);
 }
