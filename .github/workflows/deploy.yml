@@ -1,4 +1,4 @@
-name: Build Flutter Web
+name: Flutter Web Deploy
 
 on:
   push:
@@ -7,20 +7,35 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: app
 
     steps:
       - uses: actions/checkout@v4
 
-      - uses: subosito/flutter-action@v2
+      - name: Install Flutter
+        uses: subosito/flutter-action@v2
         with:
           flutter-version: '3.41.5'
-          channel: 'stable'
+          channel: stable
+          cache: true
 
       - run: flutter pub get
+      
+      - name: Build Flutter Web
+        run: flutter build web --release
 
-      - run: flutter build web --release
+      - name: Configure Netlify Redirects
+        run: echo "/* /index.html 200" > build/web/_redirects
 
-      - uses: actions/upload-artifact@v4
+      - name: Deploy to Netlify
+        uses: nwtgck/actions-netlify@v2.0
         with:
-          name: web-build
-          path: build/web
+          publish-dir: ./app/build/web 
+          production-branch: main
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          enable-commit-comment: true
+        env:
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+          NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
