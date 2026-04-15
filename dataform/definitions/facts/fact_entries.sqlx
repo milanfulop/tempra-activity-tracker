@@ -1,0 +1,28 @@
+config {
+  type: "incremental",
+  schema: "facts",
+  description: "Fact table for user entries",
+  uniqueKey: ["entry_id"],
+  bigquery: {
+    partitionBy: "date_id",
+    clusterBy: ["user_id", "category_id"] 
+  }
+}
+
+SELECT
+  CAST(id AS STRING)                                        AS entry_id,
+  CAST(user_id AS STRING)                                   AS user_id,
+  CAST(category_id AS STRING)                               AS category_id,
+  CAST(created_at AS DATE)                                  AS date_id,
+  CAST(start_time AS TIME)                                  AS start_time,
+  CAST(end_time AS TIME)                                    AS end_time,
+
+  TIME_DIFF(
+    CAST(end_time AS TIME),
+    CAST(start_time AS TIME),
+    MINUTE
+  )                                                         AS duration_minutes
+
+FROM ${ref("raw", "entries")}
+
+${when(incremental(), `WHERE created_at > (SELECT max(date_id) FROM ${self()})` )}

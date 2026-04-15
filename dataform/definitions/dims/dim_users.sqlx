@@ -1,0 +1,17 @@
+config {
+  type: "incremental",
+  schema: "dims",
+  uniqueKey: ["user_id"],
+  description: "User dimension table",
+  bigquery: {
+    partitionBy: "created_date_id"
+  }
+}
+
+SELECT
+  CAST(id AS STRING)          AS user_id,
+  CAST(name AS STRING)        AS user_name,
+  CAST(created_at AS DATE)    AS created_date_id
+FROM ${ref("raw", "users")}
+
+${when(incremental(), `WHERE created_at > (SELECT max(created_date_id) FROM ${self()})` )}
