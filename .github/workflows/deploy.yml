@@ -30,6 +30,7 @@ jobs:
           echo "SUPABASE_URL=${{ secrets.SUPABASE_URL }}" >> assets/.env
           echo "SUPABASE_ANON_KEY=${{ secrets.SUPABASE_ANON_KEY }}" >> assets/.env
           echo "GOOGLE_WEB_CLIENT_ID=${{ secrets.GOOGLE_WEB_CLIENT_ID }}" >> assets/.env
+          echo "REDIRECT_URL=${{ secrets.REDIRECT_URL }}" >> assets/.env
 
       - run: flutter pub get
       
