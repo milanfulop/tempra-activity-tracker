@@ -25,7 +25,7 @@ class _LoginPageState extends State<LoginPage> {
         // Use Supabase OAuth flow for web
         await supabase.auth.signInWithOAuth(
           OAuthProvider.google,
-          redirectTo: 'http://localhost:8080/auth/callback',
+          redirectTo: dotenv.env['REDIRECT_URL'],
         );
       } else {
         // Use google_sign_in for mobile
