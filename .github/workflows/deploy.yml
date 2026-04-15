@@ -31,11 +31,28 @@ jobs:
           echo "SUPABASE_ANON_KEY=${{ secrets.SUPABASE_ANON_KEY }}" >> assets/.env
           echo "GOOGLE_WEB_CLIENT_ID=${{ secrets.GOOGLE_WEB_CLIENT_ID }}" >> assets/.env
           echo "REDIRECT_URL=${{ secrets.REDIRECT_URL }}" >> assets/.env
-
+          
+      - name: Verify .env exists before build
+        run: |
+          echo "=== Working directory ==="
+          pwd
+          echo "=== assets/ contents ==="
+          ls -la assets/
+          echo "=== .env contents ==="
+          cat assets/.env
+          
       - run: flutter pub get
       
       - name: Build Flutter Web
         run: flutter build web --release
+
+      - name: Verify .env was bundled into build
+        run: |
+          echo "=== build/web/assets/ ==="
+          ls -la build/web/assets/
+          echo "=== nested assets ==="
+          ls -la build/web/assets/assets/
+          cat build/web/assets/assets/.env
 
       - name: Configure Netlify Redirects
         run: echo "/* /index.html 200" > build/web/_redirects
