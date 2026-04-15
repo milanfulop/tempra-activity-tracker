@@ -1,17 +1,14 @@
 name: Flutter Web Deploy
-
 on:
   push:
     branches: [main]
   workflow_dispatch:
-
 jobs:
   build:
     runs-on: ubuntu-latest
     defaults:
       run:
         working-directory: app
-
     steps:
       - uses: actions/checkout@v4
 
@@ -22,37 +19,17 @@ jobs:
           channel: stable
           cache: true
 
-      - name: Recreate .env file
-        run: |
-          mkdir -p assets
-          echo "HOST_ADDRESS=${{ secrets.HOST_ADDRESS }}" > assets/.env
-          echo "AUTH_TOKEN=${{ secrets.AUTH_TOKEN }}" >> assets/.env
-          echo "SUPABASE_URL=${{ secrets.SUPABASE_URL }}" >> assets/.env
-          echo "SUPABASE_ANON_KEY=${{ secrets.SUPABASE_ANON_KEY }}" >> assets/.env
-          echo "GOOGLE_WEB_CLIENT_ID=${{ secrets.GOOGLE_WEB_CLIENT_ID }}" >> assets/.env
-          echo "REDIRECT_URL=${{ secrets.REDIRECT_URL }}" >> assets/.env
-          
-      - name: Verify .env exists before build
-        run: |
-          echo "=== Working directory ==="
-          pwd
-          echo "=== assets/ contents ==="
-          ls -la assets/
-          echo "=== .env contents ==="
-          cat assets/.env
-          
       - run: flutter pub get
-      
-      - name: Build Flutter Web
-        run: flutter build web --release
 
-      - name: Verify .env was bundled into build
+      - name: Build Flutter Web
         run: |
-          echo "=== build/web/assets/ ==="
-          ls -la build/web/assets/
-          echo "=== nested assets ==="
-          ls -la build/web/assets/assets/
-          cat build/web/assets/assets/.env
+          flutter build web --release \
+            --dart-define=SUPABASE_URL=${{ secrets.SUPABASE_URL }} \
+            --dart-define=SUPABASE_ANON_KEY=${{ secrets.SUPABASE_ANON_KEY }} \
+            --dart-define=HOST_ADDRESS=${{ secrets.HOST_ADDRESS }} \
+            --dart-define=AUTH_TOKEN=${{ secrets.AUTH_TOKEN }} \
+            --dart-define=GOOGLE_WEB_CLIENT_ID=${{ secrets.GOOGLE_WEB_CLIENT_ID }} \
+            --dart-define=REDIRECT_URL=${{ secrets.REDIRECT_URL }}
 
       - name: Configure Netlify Redirects
         run: echo "/* /index.html 200" > build/web/_redirects
@@ -60,7 +37,7 @@ jobs:
       - name: Deploy to Netlify
         uses: nwtgck/actions-netlify@v2.0
         with:
-          publish-dir: ./app/build/web 
+          publish-dir: ./app/build/web
           production-branch: main
           production-deploy: true
           github-token: ${{ secrets.GITHUB_TOKEN }}
