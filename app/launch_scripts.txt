@@ -1,0 +1,3 @@
+flutter run -d chrome --dart-define-from-file=dart_defines.json
+flutter run -d android --dart-define-from-file=dart_defines.json
+flutter run -d ios --dart-define-from-file=dart_defines.json

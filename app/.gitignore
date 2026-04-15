@@ -165,3 +165,4 @@ app.*.symbols
 .gclient_previous_sync_commits
 
 .env
+dart_defines.json

@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:provider/provider.dart';
 import 'features/home/presentation/screens/home.dart';
 import 'features/category_editor/presentation/screens/category_editor.dart';
@@ -21,18 +20,12 @@ import './shared/utils/update_service.dart';
 import './shared/screens/update_screen.dart';
 import 'features/auth/callback/auth_callback_page.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
+import './core/env.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  try {
-    await dotenv.load(fileName: 'assets/.env');
-    print('ENV LOADED: SUPABASE_URL=${dotenv.env['SUPABASE_URL']}');
-  } catch (e) {
-    print('FAILED TO LOAD .env: $e');
-  }
-
-  final supabaseUrl = dotenv.env['SUPABASE_URL'] ?? '';
-  final supabaseAnonKey = dotenv.env['SUPABASE_ANON_KEY'] ?? '';
+  final supabaseUrl = Env.supabaseUrl;
+  final supabaseAnonKey = Env.supabaseAnonKey;
 
   assert(supabaseUrl.isNotEmpty, 'SUPABASE_URL is missing from .env');
   assert(supabaseAnonKey.isNotEmpty, 'SUPABASE_ANON_KEY is missing from .env');
