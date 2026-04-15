@@ -24,7 +24,12 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await dotenv.load(fileName: 'assets/.env', isOptional: true);
+  try {
+    await dotenv.load(fileName: 'assets/.env');
+    print('ENV LOADED: SUPABASE_URL=${dotenv.env['SUPABASE_URL']}');
+  } catch (e) {
+    print('FAILED TO LOAD .env: $e');
+  }
 
   final supabaseUrl = dotenv.env['SUPABASE_URL'] ?? '';
   final supabaseAnonKey = dotenv.env['SUPABASE_ANON_KEY'] ?? '';
