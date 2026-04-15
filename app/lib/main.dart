@@ -19,6 +19,8 @@ import './features/settings/presentation/screens/settings.dart';
 import './features/home/utils/time_slot_provider.dart';
 import './shared/utils/update_service.dart';
 import './shared/screens/update_screen.dart';
+import 'features/auth/callback/auth_callback_page.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -33,20 +35,26 @@ Future<void> main() async {
   await Supabase.initialize(
     url: supabaseUrl,
     anonKey: supabaseAnonKey,
+    authOptions: const FlutterAuthClientOptions(
+      detectSessionInUri: true,
+    ),
   );
 
   supabase.auth.onAuthStateChange.listen((data) {
     print('AUTH STATE: ${data.event} SESSION: ${data.session}');
   });
 
-  await NotificationService.instance.init();
-  await NotificationService.instance.rescheduleIfNeeded();
-
   bool updateRequired = false;
-  try {
-    updateRequired = !await AppUpdateService.isUpToDate();
-  } catch (_) {
-    updateRequired = false;
+  
+  if(!kIsWeb) {
+    await NotificationService.instance.init();
+    await NotificationService.instance.rescheduleIfNeeded();
+
+    try {
+      updateRequired = !await AppUpdateService.isUpToDate();
+    } catch (_) {
+      updateRequired = false;
+    }
   }
 
   runApp(MyApp(updateRequired: updateRequired));
@@ -118,6 +126,10 @@ final _router = GoRouter(
     GoRoute(
       path: '/auth',
       builder: (context, state) => const LoginPage(),
+    ),
+    GoRoute(
+      path: '/auth/callback',
+      builder: (context, state) => const AuthCallbackPage(),
     ),
     GoRoute(
       path: '/category-editor',

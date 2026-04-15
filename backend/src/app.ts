@@ -5,7 +5,13 @@ import statisticsRouter from './routes/statistics';
 import userRouter from './routes/user';
 import appConfigRouter from './routes/app_config';
 
+const cors = require('cors');
 const app = express();
+
+app.use(cors({
+    origin: 'http://localhost:8080',
+    credentials: true,
+  }));
 
 app.use(express.json());
 

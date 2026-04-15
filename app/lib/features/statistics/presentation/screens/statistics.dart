@@ -9,6 +9,7 @@ import '../widgets/insight_text.dart';
 import '../widgets/insight_skeleton.dart';
 import '../../utils/statistics_cache_service.dart';
 import '../../../../shared/utils/user_profile_fetch.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 
 class StatisticsScreen extends StatefulWidget {
   const StatisticsScreen({super.key});
@@ -84,16 +85,18 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
     }
 
     // 2. disk cache — show while fetching fresh
-    final cached = await StatsCacheService.load(cacheKey);
-    if (cached != null && mounted) {
-      final response = StatsResponse.fromJson(cached);
-      _memoryCache[cacheKey] = response;
-      setState(() {
-        _stats = response;
-        _insight = StatInsight.fromResponse(response);
-      });
-      _preloadAdjacent();
-      return;
+    if(!kIsWeb) {
+      final cached = await StatsCacheService.load(cacheKey);
+      if (cached != null && mounted) {
+        final response = StatsResponse.fromJson(cached);
+        _memoryCache[cacheKey] = response;
+        setState(() {
+          _stats = response;
+          _insight = StatInsight.fromResponse(response);
+        });
+        _preloadAdjacent();
+        return;
+      }
     }
 
     setState(() {
@@ -107,7 +110,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
         '/stats?date=$dateStr&stats=${_selectedPeriod.queryValue},time_distribution',
       );
 
-      await StatsCacheService.save(cacheKey, data as Map<String, dynamic>);
+      if(!kIsWeb) await StatsCacheService.save(cacheKey, data as Map<String, dynamic>);
 
       final response = StatsResponse.fromJson(data);
       _memoryCache[cacheKey] = response;
@@ -131,6 +134,8 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
   }
 
   Future<void> _preloadAdjacent() async {
+    if(kIsWeb) return;
+
     final date = _selectedDate.subtract(const Duration(days: 1));
     final dateStr = DateFormat('yyyy-MM-dd').format(date);
     final cacheKey = '${dateStr}_${_selectedPeriod.queryValue}';

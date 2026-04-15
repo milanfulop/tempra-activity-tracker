@@ -166,7 +166,7 @@ def trigger_dataform():
     compilation = client.create_compilation_result(
         parent=parent,
         compilation_result={
-            "git_commitish": "main",
+            "git_commitish": "dev",
         },
     )
 

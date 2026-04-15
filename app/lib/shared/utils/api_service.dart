@@ -16,6 +16,8 @@ class ApiService {
 
   static String? _getToken() {
     if (_testToken != null) return _testToken;
+    final token = Supabase.instance.client.auth.currentSession?.accessToken;
+    print("TOKEN: $token"); // add this
     return Supabase.instance.client.auth.currentSession?.accessToken;
   }
 
