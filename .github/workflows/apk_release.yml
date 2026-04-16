@@ -1,6 +1,9 @@
 name: Flutter APK Release
 on:
   workflow_dispatch:
+  push:
+    paths:
+      - 'app/**'
 jobs:
   build:
     runs-on: ubuntu-latest
