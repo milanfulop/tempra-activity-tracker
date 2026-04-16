@@ -20,9 +20,9 @@ jobs:
       - name: Install dependencies
         run: pip install -r statistics/requirements.txt
 
-      - name: Run bq-ingest
+      - name: Run bq_ingest
         env:
           BQ_CREDENTIALS_JSON: ${{ secrets.BQ_CREDENTIALS_JSON }}
           SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-        run: python statistics/bq-ingest.py
+        run: python statistics/bq_ingest.py
