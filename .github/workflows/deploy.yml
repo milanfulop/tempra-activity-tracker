@@ -1,4 +1,4 @@
-name: Flutter Web Deploy
+name: Flutter APK Release
 on:
   workflow_dispatch:
 jobs:
@@ -9,37 +9,28 @@ jobs:
         working-directory: app
     steps:
       - uses: actions/checkout@v4
-
       - name: Install Flutter
         uses: subosito/flutter-action@v2
         with:
           flutter-version: '3.41.5'
           channel: stable
           cache: true
-
       - run: flutter pub get
-
-      - name: Build Flutter Web
+      - name: Build APK
         run: |
-          flutter build web --release \
+          flutter build apk --release \
             --dart-define=SUPABASE_URL=${{ secrets.SUPABASE_URL }} \
             --dart-define=SUPABASE_ANON_KEY=${{ secrets.SUPABASE_ANON_KEY }} \
             --dart-define=HOST_ADDRESS=${{ secrets.HOST_ADDRESS }} \
             --dart-define=AUTH_TOKEN=${{ secrets.AUTH_TOKEN }} \
             --dart-define=GOOGLE_WEB_CLIENT_ID=${{ secrets.GOOGLE_WEB_CLIENT_ID }} \
             --dart-define=REDIRECT_URL=${{ secrets.REDIRECT_URL }}
-
-      - name: Configure Netlify Redirects
-        run: echo "/* /index.html 200" > build/web/_redirects
-
-      - name: Deploy to Netlify
-        uses: nwtgck/actions-netlify@v2.0
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
         with:
-          publish-dir: ./app/build/web
-          production-branch: main
-          production-deploy: true
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          enable-commit-comment: true
+          tag_name: v${{ github.run_number }}
+          name: Release v${{ github.run_number }}
+          files: app/build/app/outputs/flutter-apk/app-release.apk
+          generate_release_notes: true
         env:
-          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
-          NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
