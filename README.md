@@ -2,6 +2,11 @@
 
 Tempra turns paper time-tracking into a simple digital grid, giving you the real-time stats you need to stop wasting precious hours. The project was inspired by an experiment shared in this [POV article](https://bookbase.substack.com/p/pov-11-konyv-7-kozos-pont?utm_source=substack&publication_id=1116676&post_id=188358380&utm_medium=email&utm_content=share&utm_campaign=email-share&action=share&isFreemail=true&r=2y2ee7&triedRedirect=true), which used a manual paper-based system to track time and optimize focus.
 
+### Try it out!
+[Web version (all platforms)](https://quiet-starburst-ab654b.netlify.app)
+
+[APK](https://github.com/milanfulop/tempra-activity-tracker/releases/tag/release)
+
 ## Bemutató videó
 <a href="https://youtu.be/i_2UXGwciz0">
   <img src="https://github.com/user-attachments/assets/1da4c39f-e2a8-499c-bf04-acc67c14efa2" width="415">
